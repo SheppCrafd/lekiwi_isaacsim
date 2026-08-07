@@ -1,6 +1,8 @@
 
 ---
 
+> **This is a fork of [kabilankb/lekiwi_isaacsim](https://github.com/kabilankb/lekiwi_isaacsim)**, extended with two arm-free LeKiwi variants (base + camera, base + RPLIDAR A1M8) built for training a navigation policy in Isaac Sim/Isaac Lab. See [`plan.md`](plan.md) for the full training-to-real-robot roadmap and [`isaac_sim/README_lekiwi_variants.md`](isaac_sim/README_lekiwi_variants.md) for how the two USD variants were built and what they contain. The original repo's full arm+camera URDF/USD (with the SO-ARM101 attached) lives upstream at the link above, not duplicated here.
+
 # 🦾 Lekiwi URDF for Isaac Sim
 
 This repository provides the **Unified Robot Description Format (URDF)** models for the **Lekiwi robot**, optimized for use within **NVIDIA Isaac Sim**. Our goal is to enable realistic, high-fidelity simulations of the Lekiwi robot for robotics research, development, and testing.
@@ -82,14 +84,14 @@ Follow these instructions to set up the URDF model locally for development and s
 
 1. Launch Isaac Sim.
 2. Go to `File -> New Stage`.
-3. Import the URDF:
+3. Import the URDF (`urdf/lekiwi_cam.urdf` or `urdf/lekiwi_lidar.urdf`):
 
    * `File -> Import -> URDF`
-   * Navigate to:
-     `omniverse://localhost/NVIDIA/Assets/lekiwi_robot/urdf/lekiwi.urdf`
-   * Select `lekiwi.urdf`
-   * Enable **merge fixed joints** for better performance (optional).
+   * Select the variant you want
+   * Enable **merge fixed joints** for better performance (optional)
 4. Simulate and interact with the robot in the scene.
+
+Or skip URDF import entirely and load `usd/lekiwi_camera.usd` / `usd/lekiwi_lidar.usd` directly — these are already physics-ready Isaac Sim assets (real articulation, real camera/lidar mount), no import step needed. See `isaac_sim/README_lekiwi_variants.md`.
 
 ---
 
@@ -104,15 +106,17 @@ Follow these instructions to set up the URDF model locally for development and s
 2. **Launch URDF in RViz:**
 
    ```bash
-   ros2 launch urdf_tutorial display.launch.py model:=/absolute/path/to/lekiwi-urdf-isaacsim/urdf/lekiwi.urdf
+   ros2 launch urdf_tutorial display.launch.py model:=/absolute/path/to/lekiwi_isaacsim/urdf/lekiwi_cam.urdf
    ```
 ![Image](https://github.com/user-attachments/assets/ed895c3b-36ca-43e3-965a-78523df1fa8b)
 ---
 
-## 📁 Current URDF Models
+## 📁 Current Models
 
-* `urdf/lekiwi.urdf` – Main URDF file for Lekiwi
-* `meshes/` – Visual and collision meshes (`.stl`, `.obj`, etc.)
+* `urdf/lekiwi_cam.urdf` / `urdf/lekiwi_lidar.urdf` – Arm-free LeKiwi base URDFs (Seeed X10 camera / RPLIDAR A1M8 respectively), reference `urdf/meshes/`
+* `usd/lekiwi_camera.usd` / `usd/lekiwi_lidar.usd` – The same two variants as self-contained, physics-ready Isaac Sim USD assets, derived from [LightwheelAI/leisaac](https://github.com/LightwheelAI/leisaac)'s real LeKiwi asset with the arm removed (see `isaac_sim/README_lekiwi_variants.md` for full provenance)
+* `urdf/meshes/` – Visual and collision meshes (`.stl`)
+* The original repo's full arm+camera `lekiwi.urdf`/`lekiwi.usd` (with the SO-ARM101 attached) is not included here — see [upstream](https://github.com/kabilankb/lekiwi_isaacsim) for that
 
 ---
 
