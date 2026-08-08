@@ -40,7 +40,7 @@ You were explicit: no payment info for *me*, nothing on your own machine (can't 
 - [ ] **Fix the rotation-randomization axis.** "x-y rotation (not z)" is very likely backwards for a wheeled ground robot: randomize **yaw (Z)** for starting heading, keep roll/pitch (X/Y) at zero[...]
 - [ ] **Decide what the policy is actually allowed to observe.** The "closer to success area" reward can use privileged ground-truth simulator position (rewards are allowed to cheat) — but the p[...]
 - [x] **Physics timestep, control frequency, RL library, and network architecture — settled by copying `MuammerBay/isaac_so_arm101`** (a real, working Isaac Lab RL project for the SO-ARM101, the[...]
-  - `sim.dt = 1/60s` (60Hz physics), `decimation = 2` → policy acts every 2 physics steps, i.e. a **30Hz control rate**. Still need to confirm this against the real LeKiwi's actual control loop [...]
+  - `sim.dt = 1/60s` (60Hz physics), `decimation = 2` → policy acts every 2 physics steps, i.e. a **30Hz control rate**. Still need to confirm this against the real LeKiwi's actual control loop [...] 
   - RL library: **rsl_rl** (`RslRlOnPolicyRunnerCfg` / `RslRlPpoActorCriticCfg` / `RslRlPpoAlgorithmCfg`).
   - PPO hyperparameters: `num_steps_per_env=24`, `learning_rate=1e-3` (adaptive schedule), `clip_param=0.2`, `entropy_coef=0.001`, `num_learning_epochs=8`, `num_mini_batches=4`, `gamma=0.99`, `lam[...]
   - Network: `actor_hidden_dims=[64, 64]`, `critic_hidden_dims=[64, 64]`, `elu` activation — a plain 2-layer MLP. **This directly applies to the lidar variant** (its observations — ranges + `b[...]
@@ -64,7 +64,7 @@ You were explicit: no payment info for *me*, nothing on your own machine (can't 
 
 Termination conditions as specified (cone hit = fail, full-footprint-in-success-area = success) are missing pieces needed to actually train:
 
-- [ ] **Episode timeout / truncation.** No max-episode-length exists yet. Without one, an episode that never hits a cone or reaches the goal never resets, which breaks batched on-policy training ([...]
+- [ ] **Episode timeout / truncation.** No max-episode-length exists yet. Without one, an episode that never hits a cone or reaches the goal never resets, which breaks batched on-policy training [...] 
 - [ ] **Out-of-bounds termination.** What happens if the robot drives outside the 100 sq ft area without touching a cone or the goal? Needs its own fail condition, or those episodes just burn to t[...]
 - [ ] **Explicit negative reward on cone collision.** A reset alone is weak signal — add a real penalty so failure is distinguishable from "ran out of time," not just inferred from episode lengt[...]
 - [ ] **Action-smoothness / energy penalty.** Without one, policies commonly learn jerky, high-acceleration control that's fine in sim but doesn't survive real motor/torque limits, and is harder o[...]
@@ -99,18 +99,17 @@ What's already decided (surroundings, materials, cone size/shape, start x/y, sen
 
 ## Phase 9 — Acquire the physical robot
 
-Nothing physical has been ordered yet — this whole project has been sim assets only.
+Nothing physical has been ordered yet — this whole project has been sim assets only. **See `BoM.md` for verified component links, pricing, and stock status as of August 2026.**
 
-- [ ] Order the Seeed LeKiwi Kit (mobile base, ~$179 per the product page found this session) plus a Raspberry Pi 5, and **both** sensors — Seeed X10 USB camera and RPLIDAR A1M8 — since both policies are intended to be tested on the real robot.
-  - Seeed LeKiwi product/search: https://www.seeedstudio.com/search?q=LeKiwi
-  - Raspberry Pi 5 (official): https://www.raspberrypi.com/products/raspberry-pi-5/
-  - Seeed X10 USB camera (search): https://www.seeedstudio.com/search?q=X10+camera
-  - RPLIDAR A1 (Slamtec): https://www.slamtec.com/en/Lidar/A1
+- [ ] Order the Seeed LeKiwi Kit (mobile base, 3D printed parts, battery) — **$179.00 @ [Seeed Studio JP](https://jp.seeedstudio.com/mobile-base-c-2676.html)** (pre-order/limited at most US retailers)
+- [ ] Order Raspberry Pi 5 8GB (bare board) — **$175–$200 @ [Adafruit](https://www.adafruit.com/product/5813)** (in stock; official MSRP $95, but retail pricing reflects high demand)
+- [ ] Order Seeed X10 USB Camera 1080p (front RGB sensor) — **$12.99 @ [Seeed Studio](https://www.seeedstudio.com/X10-USB-wired-camera-p-6506.html)** (in stock)
+- [ ] Order RPLIDAR A1M8-R6 360° LiDAR (12m range 2D scanner) — **$119.98 @ [Walmart](https://business.walmart.com/ip/RPLIDAR-A1M8-2D-360-Degree-12-Meters-Scanning-Radius-LIDAR-Sensor-Scanner-for-Obstacle-Avoidance-and-Navigation-of-Robots/14747563594)** (in stock; cheapest verified option with free US shipping)
 - [ ] Assemble per Seeed's own build instructions (their wiki confirmed the base webcam mount, Pi mounting location, etc. — already cross-referenced against the sim assets this session).
   - Seeed Wiki: https://wiki.seeedstudio.com/
 - [ ] Install LeRobot + the robot's control firmware/software stack on the Pi.
-  - LeRobot / LeKiwi software (GitHub search): https://github.com/search?q=LeRobot+LeKiwi
-- [ ] **First real cost checkpoint that isn't cloud-GPU-shaped**: actual money for actual hardware, whenever you're ready for it — not a blocker for Phases 1-8, which all happen in sim first.
+  - LeRobot / LeKiwi software (GitHub): https://github.com/huggingface/lerobot
+- [ ] **First real cost checkpoint that isn't cloud-GPU-shaped**: actual money for actual hardware (~$487–$512 + shipping/taxes), whenever you're ready for it — not a blocker for Phases 1-8, which all happen in sim first.
 
 ## Phase 10 — Sim-to-real transfer
 
