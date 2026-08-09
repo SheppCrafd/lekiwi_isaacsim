@@ -17,7 +17,7 @@ import os
 REPO = r"C:\Users\mwall\lekiwi_isaacsim"
 TARGETS = [
     ("camera", os.path.join(REPO, "usd", "lekiwi_camera.usd")),
-    ("lidar", os.path.join(REPO, "usd", "lekiwi_lidar.usd")),
+    # lidar variant removed for now -- see isaac_sim/README_lekiwi_variants.md
 ]
 N_VIEWS = 12
 ELEVATION_DEG = 28  # camera height angle above the horizontal, degrees

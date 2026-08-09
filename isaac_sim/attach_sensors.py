@@ -1,15 +1,18 @@
 """
 Run this INSIDE Isaac Sim (Script Editor, or `python.sh this_file.py` with the
-stage already open) AFTER referencing usd/lekiwi_camera.usd or
-usd/lekiwi_lidar.usd into your scene (Create > Payload/Reference, or
-add_reference_to_stage in a standalone script).
+stage already open) AFTER referencing usd/lekiwi_camera.usd into your scene
+(Create > Payload/Reference, or add_reference_to_stage in a standalone script).
 
-These two USD files were built directly from the real, community-maintained
+NOTE: the lidar variant (usd/lekiwi_lidar.usd) referenced throughout this file
+has been removed for now -- see isaac_sim/README_lekiwi_variants.md -- so only
+the attach_front_camera() path below is currently usable. The lidar functions
+are left in place as a reference for when that variant comes back.
+
+lekiwi_camera.usd was built directly from the real, community-maintained
 LeKiwi Isaac Sim asset (LightwheelAI/leisaac_env on HuggingFace,
 assets/robots/lekiwi.usd -- the asset behind leisaac's own LEKIWI_CFG), with
-the arm stripped out (and for the lidar variant, the base camera mesh too).
-Real physics/articulation/materials/collision groups all came from that
-asset -- see README_lekiwi_variants.md for the full provenance.
+the arm stripped out. Real physics/articulation/materials/collision groups all
+came from that asset -- see README_lekiwi_variants.md for the full provenance.
 
 lekiwi_camera.usd already has a REAL UsdGeom.Camera prim baked in at
 /LeKiwi/base/front_camera (real position + optics, copied from leisaac's own
