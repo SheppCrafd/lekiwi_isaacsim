@@ -1,0 +1,394 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="LeKiwi">
+  <link name="base">
+    <inertial>
+      <origin xyz="-0.00966559 0.00464602 0.03719924" rpy="0 0 0" />
+      <mass value="7.931429" />
+      <inertia ixx="0.030386236" iyy="0.027429567" izz="0.038619351" ixy="-0.001904713" ixz="-0.001171916" iyz="-0.002342434" />
+    </inertial>
+    <visual name="base_base_plate_layer1_v5_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_base_plate_layer1_v5.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_servo_controller_mount_v3_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_servo_controller_mount_v3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_lipo_battery_mount_v3_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_lipo_battery_mount_v3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_Battery___Battery_5_2_Ah_DC5521_Plug_v2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_Battery___Battery_5_2_Ah_DC5521_Plug_v2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_base_plate_layer2_v3_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_base_plate_layer2_v3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_Bottom_V2_v3_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_Bottom_V2_v3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_Top_V2_v2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_Top_V2_v2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_5_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_5.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_4_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_4.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_3_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_3.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_drive_motor_mount_v11_2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_drive_motor_mount_v11_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_ST3215_Servo_Motor_v1_2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_ST3215_Servo_Motor_v1_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_drive_motor_mount_v11_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_drive_motor_mount_v11.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_ST3215_Servo_Motor_v1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_ST3215_Servo_Motor_v1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_drive_motor_mount_v11_1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_drive_motor_mount_v11_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="base_ST3215_Servo_Motor_v1_1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_ST3215_Servo_Motor_v1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision name="base_base_plate_layer1_v5_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_base_plate_layer1_v5_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_servo_controller_mount_v3_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_servo_controller_mount_v3_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_lipo_battery_mount_v3_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_lipo_battery_mount_v3_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_Battery___Battery_5_2_Ah_DC5521_Plug_v2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_Battery___Battery_5_2_Ah_DC5521_Plug_v2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_base_plate_layer2_v3_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_base_plate_layer2_v3_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_Bottom_V2_v3_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_Bottom_V2_v3_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_Top_V2_v2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_Top_V2_v2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_5_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_5_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_4_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_4_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_3_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_3_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_a_4868A713_NO_THREADS_Female_Threaded_Hex_Standoff_1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_drive_motor_mount_v11_2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_drive_motor_mount_v11_2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_ST3215_Servo_Motor_v1_2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_ST3215_Servo_Motor_v1_2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_drive_motor_mount_v11_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_drive_motor_mount_v11_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_ST3215_Servo_Motor_v1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_ST3215_Servo_Motor_v1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_drive_motor_mount_v11_1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_drive_motor_mount_v11_1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="base_ST3215_Servo_Motor_v1_1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_base_ST3215_Servo_Motor_v1_1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="wheel_back">
+    <inertial>
+      <origin xyz="-0.00000009 -0.00000009 -0.02158448" rpy="0 0 0" />
+      <mass value="1.477856" />
+      <inertia ixx="0.001146268" iyy="0.001146265" izz="0.001912453" ixy="-0.000000007" ixz="0.000000000" iyz="-0.000000000" />
+    </inertial>
+    <visual name="wheel_back_omni_wheel_mount_v5_2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_back_omni_wheel_mount_v5_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="wheel_back_a__Omni_Directional_Wheel_Single_Body_v1_2_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_back_a__Omni_Directional_Wheel_Single_Body_v1_2.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision name="wheel_back_omni_wheel_mount_v5_2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_back_omni_wheel_mount_v5_2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="wheel_back_a__Omni_Directional_Wheel_Single_Body_v1_2_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_back_a__Omni_Directional_Wheel_Single_Body_v1_2_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="wheel_left">
+    <inertial>
+      <origin xyz="-0.01869275 -0.00000009 0.01079217" rpy="0 0 0" />
+      <mass value="1.477856" />
+      <inertia ixx="0.001720906" iyy="0.001146268" izz="0.001337812" ixy="-0.000000003" ixz="-0.000331769" iyz="-0.000000006" />
+    </inertial>
+    <visual name="wheel_left_omni_wheel_mount_v5_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_left_omni_wheel_mount_v5.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="wheel_left_a__Omni_Directional_Wheel_Single_Body_v1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_left_a__Omni_Directional_Wheel_Single_Body_v1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision name="wheel_left_omni_wheel_mount_v5_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_left_omni_wheel_mount_v5_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="wheel_left_a__Omni_Directional_Wheel_Single_Body_v1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_left_a__Omni_Directional_Wheel_Single_Body_v1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="wheel_right">
+    <inertial>
+      <origin xyz="0.01869266 -0.00000006 0.01079233" rpy="0 0 0" />
+      <mass value="1.477856" />
+      <inertia ixx="0.001720905" iyy="0.001146272" izz="0.001337810" ixy="-0.000000003" ixz="0.000331770" iyz="0.000000005" />
+    </inertial>
+    <visual name="wheel_right_omni_wheel_mount_v5_1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_right_omni_wheel_mount_v5_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="wheel_right_a__Omni_Directional_Wheel_Single_Body_v1_1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_right_a__Omni_Directional_Wheel_Single_Body_v1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision name="wheel_right_omni_wheel_mount_v5_1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_right_omni_wheel_mount_v5_1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="wheel_right_a__Omni_Directional_Wheel_Single_Body_v1_1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_wheel_right_a__Omni_Directional_Wheel_Single_Body_v1_1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="lidar_assembly">
+    <inertial>
+      <origin xyz="-0.00720818 -0.00000297 0.03867200" rpy="0 0 0" />
+      <mass value="0.259245" />
+      <inertia ixx="0.000206542" iyy="0.000272866" izz="0.000251230" ixy="0.000000000" ixz="0.000000000" iyz="0.000000000" />
+    </inertial>
+    <visual name="lidar_assembly_lidar_mount_block_v1_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_lidar_assembly_lidar_mount_block_v1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="lidar_assembly_rplidar_a1m8_base_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_lidar_assembly_rplidar_a1m8_base.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <visual name="lidar_assembly_rplidar_a1m8_cap_visual">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_lidar_assembly_rplidar_a1m8_cap.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </visual>
+    <collision name="lidar_assembly_lidar_mount_block_v1_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_lidar_assembly_lidar_mount_block_v1_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="lidar_assembly_rplidar_a1m8_base_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_lidar_assembly_rplidar_a1m8_base_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+    <collision name="lidar_assembly_rplidar_a1m8_cap_collision">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/lidar_lidar_assembly_rplidar_a1m8_cap_1.stl" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="fix_wheel_back" type="fixed">
+    <origin xyz="0.00060083 -0.11816273 0.01786001" rpy="-1.57079659 -0.00000006 0.00000020" />
+    <parent link="base" />
+    <child link="wheel_back" />
+  </joint>
+  <joint name="fix_wheel_left" type="fixed">
+    <origin xyz="-0.10277865 0.05858054 0.01786001" rpy="-1.57079609 -0.00000010 0.00000013" />
+    <parent link="base" />
+    <child link="wheel_left" />
+  </joint>
+  <joint name="fix_wheel_right" type="fixed">
+    <origin xyz="0.10143365 0.05937464 0.01786001" rpy="-1.57079676 -0.00000007 -0.00000014" />
+    <parent link="base" />
+    <child link="wheel_right" />
+  </joint>
+  <joint name="fix_lidar_assembly" type="fixed">
+    <origin xyz="-0.00038116 0.01483253 0.05700000" rpy="0.00000000 0.00000000 -0.00409005" />
+    <parent link="base" />
+    <child link="lidar_assembly" />
+  </joint>
+</robot>

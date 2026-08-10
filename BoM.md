@@ -17,6 +17,38 @@ Final component list for Phase 9, with direct checkout links and verified stock 
 
 ---
 
+## Lidar Mount Hardware (for the 3D-printed RPLIDAR A1M8 mount, `lidar_mount_block_v1.stl`)
+
+The mount design uses **two different screw sizes**, not just M3 — worth knowing before
+ordering, since it's easy to assume one size covers the whole assembly:
+
+- **M3** for the 4 screws holding the mount block down to the robot's own top base
+  plate (matches the plate's real 3.5mm hole grid).
+- **M2.5**, not M3, for the 2 screws holding the RPLIDAR A1M8 itself to the block —
+  that's Slamtec's own stock hole size on the real unit (confirmed in their datasheet),
+  not a choice made for this build.
+
+| Component | Qty needed | Price (USD) | Stock Status | Link |
+|-----------|-----------|-----------|--------------|------|
+| **M3 heat-set brass inserts** (100-pc pack, only need 4) | 1 pack | $10.99 | ✅ In stock | [Prusa3D](https://www.prusa3d.com/product/heat-set-inserts-m3-standard-100-pcs/) |
+| **M2.5 heat-set brass inserts** (100-pc pack, only need 2) | 1 pack | $11.99 | ✅ In stock | [Prusa3D](https://www.prusa3d.com/product/threaded-inserts-m2-5-standard-100-pcs/) |
+| **M3 x 12mm socket head cap screws** (for the 4 base-plate-to-block screws) | 4 | ~$8–12 for an assorted-length kit | ⚠️ Price not confirmable via automated fetch (Amazon loads pricing dynamically) — check at checkout | [Amazon: M3 assortment kit](https://www.amazon.com/Alloy-Socket-Assortment-Metric-Thread/dp/B01FH2365Q) |
+| **M2.5 x 8mm socket head cap screws** (for the 2 lidar-to-block screws) | 2 | ~$8–12 for an assorted-length kit | ⚠️ Price not confirmable via automated fetch — check at checkout | [Amazon: M2.5 screw search](https://www.amazon.com/s?k=m2.5+socket+head+cap+screw) |
+| **Heat-set insert installation tips + iron adapter** (M2/M3/M4/M5/M6/M8, fits TS100/TS101/Pinecil-style irons) | 1 kit | $32.40 | ✅ In stock | [kb-3d.com: CNCKitchen Heat Set Insert Tool Kit](https://kb-3d.com/store/tools-equipment/976-cnckitchen-heat-set-insert-tool-kit-ts100ts101-1688693301779.html) |
+
+**Not a heat gun** — heat-set inserts need a **soldering iron** (controlled temperature,
+firm even downward pressure to seat the insert square), not a heat gun; a heat gun can't
+apply that directional force and tends to overheat/warp the surrounding plastic. If you
+don't already own a soldering iron, the kit above assumes a TS100/TS101/Pinecil-style
+iron (common, cheap, popular in the 3D-printing/maker world); if you have a different
+iron (e.g. a Hakko or Weller), search for insert tips sized for that iron's tip mount
+instead of buying the TS100-specific adapter above.
+
+**Estimated added cost:** ~$55–75 (inserts + screws + tooling, assuming no soldering
+iron is already owned beyond the tip/adapter kit).
+
+---
+
 ## Notes
 
 - **LeKiwi Kit Stock:** The official Seeed Studio US store currently shows this as pre-order/limited availability. The Japanese distributor shows stock. Check [Seeed's official store](https://www.seeedstudio.com) for direct US availability, or consider the RobotShop/OpenELAB international options as fallback.
@@ -63,4 +95,4 @@ These are standard and typically already available:
 
 ---
 
-*Last verified: August 8, 2026. Prices and stock status subject to change. Always confirm availability and current price before checkout.*
+*Last verified: August 9, 2026. Prices and stock status subject to change. Always confirm availability and current price before checkout.*

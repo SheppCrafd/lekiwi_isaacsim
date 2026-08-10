@@ -1,7 +1,7 @@
 
 ---
 
-> **This is a fork of [kabilankb/lekiwi_isaacsim](https://github.com/kabilankb/lekiwi_isaacsim)**, extended with an arm-free, camera-only LeKiwi variant built for training a navigation policy in Isaac Sim/Isaac Lab. See [`plan.md`](plan.md) for the full training-to-real-robot roadmap and [`isaac_sim/README_lekiwi_variants.md`](isaac_sim/README_lekiwi_variants.md) for how the USD variant was built and what it contains. The original repo's full arm+camera URDF/USD (with the SO-ARM101 attached) lives upstream at the link above, not duplicated here. A RPLIDAR A1M8 variant existed here previously; it's been removed while the camera variant's geometry is being brought in line with the real [Seeed LeKiwi Kit](https://www.seeedstudio.com/Lekiwi-Kit-p-6501.html) and will return later.
+> **This is a fork of [kabilankb/lekiwi_isaacsim](https://github.com/kabilankb/lekiwi_isaacsim)**, extended with two arm-free LeKiwi variants (base + camera, base + RPLIDAR A1M8) built for training a navigation policy in Isaac Sim/Isaac Lab. See [`plan.md`](plan.md) for the full training-to-real-robot roadmap and [`isaac_sim/README_lekiwi_variants.md`](isaac_sim/README_lekiwi_variants.md) for how the two USD variants were built and what they contain, including the corrections made against the real [Seeed LeKiwi Kit](https://www.seeedstudio.com/Lekiwi-Kit-p-6501.html). The original repo's full arm+camera URDF/USD (with the SO-ARM101 attached) lives upstream at the link above, not duplicated here.
 
 # 🦾 Lekiwi URDF for Isaac Sim
 
@@ -84,13 +84,14 @@ Follow these instructions to set up the URDF model locally for development and s
 
 1. Launch Isaac Sim.
 2. Go to `File -> New Stage`.
-3. Import the URDF (`urdf/lekiwi_cam.urdf`):
+3. Import the URDF (`urdf/lekiwi_cam.urdf` or `urdf/lekiwi_lidar.urdf`):
 
    * `File -> Import -> URDF`
+   * Select the variant you want
    * Enable **merge fixed joints** for better performance (optional)
 4. Simulate and interact with the robot in the scene.
 
-Or skip URDF import entirely and load `usd/lekiwi_camera.usd` directly — it's already a physics-ready Isaac Sim asset (real articulation, real camera mount), no import step needed. See `isaac_sim/README_lekiwi_variants.md`.
+Or skip URDF import entirely and load `usd/lekiwi_camera.usd` / `usd/lekiwi_lidar.usd` directly — these are already physics-ready Isaac Sim assets (real articulation, real camera/lidar mount), no import step needed. See `isaac_sim/README_lekiwi_variants.md`.
 
 ---
 
@@ -112,11 +113,10 @@ Or skip URDF import entirely and load `usd/lekiwi_camera.usd` directly — it's 
 
 ## 📁 Current Models
 
-* `urdf/lekiwi_cam.urdf` – Arm-free LeKiwi base URDF (Seeed X10 USB camera), references `urdf/meshes/`
-* `usd/lekiwi_camera.usd` – The same variant as a self-contained, physics-ready Isaac Sim USD asset, derived from [LightwheelAI/leisaac](https://github.com/LightwheelAI/leisaac)'s real LeKiwi asset with the arm removed, wheel geometry cross-checked against the CAD-derived URDF, and the camera mount/model corrected to match the real Seeed Kit (see `isaac_sim/README_lekiwi_variants.md` for full provenance)
-* `urdf/meshes/` – Visual and collision meshes (`.stl`)
+* `urdf/lekiwi_cam.urdf` / `urdf/lekiwi_lidar.urdf` – Arm-free LeKiwi base URDFs (Seeed X10 USB camera / RPLIDAR A1M8 respectively), reference `urdf/meshes/`
+* `usd/lekiwi_camera.usd` / `usd/lekiwi_lidar.usd` – The same two variants as self-contained, physics-ready Isaac Sim USD assets, derived from [LightwheelAI/leisaac](https://github.com/LightwheelAI/leisaac)'s real LeKiwi asset with the arm removed, wheel geometry cross-checked against the CAD-derived URDF, camera mount/model corrected to match the real Seeed Kit, and a from-scratch RPLIDAR A1M8 mount (real Slamtec datasheet dimensions) for the lidar variant (see `isaac_sim/README_lekiwi_variants.md` for full provenance)
+* `urdf/meshes/` – Visual and collision meshes (`.stl`), including `lidar_mount_block_v1.stl`, the 3D-printable RPLIDAR mount
 * The original repo's full arm+camera `lekiwi.urdf`/`lekiwi.usd` (with the SO-ARM101 attached) is not included here — see [upstream](https://github.com/kabilankb/lekiwi_isaacsim) for that
-* A RPLIDAR A1M8 variant (`lekiwi_lidar.urdf`/`.usd`) previously lived here; removed for now, will return once the camera variant is fully verified
 
 ---
 
