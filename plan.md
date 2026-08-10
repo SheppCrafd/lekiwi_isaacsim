@@ -112,16 +112,18 @@ What's already decided (surroundings, materials, cone size/shape, start x/y, sen
 
 Nothing physical has been ordered yet — this whole project has been sim assets only. **See `BoM.md` for verified component links, pricing, and stock status as of August 2026.**
 
-- [ ] Order the Seeed LeKiwi Kit (mobile base, 3D printed parts, battery) — **$179.00 @ [Seeed Studio JP](https://jp.seeedstudio.com/mobile-base-c-2676.html)** (pre-order/limited at most US retailers)
-- [ ] Order Raspberry Pi 5 8GB (bare board) — **$175–$200 @ [Adafruit](https://www.adafruit.com/product/5813)** (in stock; official MSRP $95, but retail pricing reflects high demand)
-- [ ] Order Seeed X10 USB Camera 1080p (front RGB sensor) — **$12.99 @ [Seeed Studio](https://www.seeedstudio.com/X10-USB-wired-camera-p-6506.html)** (in stock)
-- [ ] Order RPLIDAR A1M8-R6 360° LiDAR (12m range 2D scanner) — **$119.98 @ [Walmart](https://business.walmart.com/ip/RPLIDAR-A1M8-2D-360-Degree-12-Meters-Scanning-Radius-LIDAR-Sensor-Scanner-for-Obstacle-Avoidance-and-Navigation-of-Robots/14747563594)** (in stock; cheapest verified option with free US shipping)
-- [ ] **3D print `urdf/meshes/lidar_mount_block_v1.stl`** (the RPLIDAR mount, 110×80×25mm) — normal ~15-20% infill, not solid (solid would be ~245g in PLA). Order the mount hardware too: M3 + M2.5 heat-set inserts, M3 x 12mm and M2.5 x 8mm screws, and a soldering-iron insert-tip kit (not a heat gun) — full verified links in `BoM.md`'s "Lidar Mount Hardware" section, ~$55-75 total.
+**Cost-reduction pass (2026-08-10):** re-priced everything except the Kit and camera against a $300-350 target. Real savings found (RPLIDAR −$20.98, Pi 5 −$60 to −$90 by dropping to 4GB), but the honest total is **~$432-455, not $300-350** — the two fixed components alone already account for $191.99 of the target, and the real current floor prices for a genuine Pi 5 + genuine RPLIDAR + mount hardware (~$240 minimum) don't fit in what's left. See `BoM.md`'s "Why $300–350 isn't reachable right now" for the full breakdown and the real (bigger-tradeoff) levers that could actually close the gap — none applied without your sign-off.
+
+- [ ] Order the Seeed LeKiwi Kit (mobile base, 3D printed parts, battery) — **$179.00 @ [Seeed Studio JP](https://jp.seeedstudio.com/mobile-base-c-2676.html)** (pre-order/limited at most US retailers) — unchanged, excluded from the cost pass
+- [ ] Order Raspberry Pi 5 4GB (bare board) — **$110.00 @ [PiShop.us](https://www.pishop.us/product/raspberry-pi-5-4gb/)** (in stock, official reseller; every 8GB reseller checked is still $175-180, a real industry-wide memory-cost condition, not a search gap — 8GB **is** available for $114.99 in-store only at Micro Center if you have one nearby, see `BoM.md`)
+- [ ] Order Seeed X10 USB Camera 1080p (front RGB sensor) — **$12.99 @ [Seeed Studio](https://www.seeedstudio.com/X10-USB-wired-camera-p-6506.html)** (in stock) — unchanged, excluded from the cost pass
+- [ ] Order RPLIDAR A1M8-R6 360° LiDAR (12m range 2D scanner) — **$99.00 @ [Seeed Studio](https://www.seeedstudio.com/RPLiDAR-A1M8-R6-360-Degree-Laser-Scanner-Kit-12M-Range-p-4785.html)** (in stock; confirmed real floor price — matches Slamtec's own official AliExpress store exactly, not a fluke listing)
+- [ ] **3D print `urdf/meshes/lidar_mount_block_v1.stl`** (the RPLIDAR mount, 110×80×25mm) — normal ~15-20% infill, not solid (solid would be ~245g in PLA). Order the mount hardware too: a combined M2.5+M3 heat-set insert + soldering-iron-tip kit is cheaper than the three separate purchases the previous pass priced out — full detail (and the separate-purchase fallback) in `BoM.md`'s "Lidar Mount Hardware" section, ~$31-49 total (down from ~$55-75).
 - [ ] Assemble per Seeed's own build instructions (their wiki confirmed the base webcam mount, Pi mounting location, etc. — already cross-referenced against the sim assets this session).
   - Seeed Wiki: https://wiki.seeedstudio.com/
 - [ ] Install LeRobot + the robot's control firmware/software stack on the Pi.
   - LeRobot / LeKiwi software (GitHub): https://github.com/huggingface/lerobot
-- [ ] **First real cost checkpoint that isn't cloud-GPU-shaped**: actual money for actual hardware (~$487–$512 + shipping/taxes), whenever you're ready for it — not a blocker for Phases 1-8, which all happen in sim first.
+- [ ] **First real cost checkpoint that isn't cloud-GPU-shaped**: actual money for actual hardware (~$432–$455 + shipping/taxes — see `BoM.md` for why this isn't the originally-targeted $300-350), whenever you're ready for it — not a blocker for Phases 1-8, which all happen in sim first.
 
 ## Phase 10 — Sim-to-real transfer
 
