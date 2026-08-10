@@ -1,7 +1,7 @@
 
 ---
 
-> **This is a fork of [kabilankb/lekiwi_isaacsim](https://github.com/kabilankb/lekiwi_isaacsim)**, extended with two arm-free LeKiwi variants (base + camera, base + RPLIDAR A1M8) built for training a navigation policy in Isaac Sim/Isaac Lab. See [`plan.md`](plan.md) for the full training-to-real-robot roadmap and [`isaac_sim/README_lekiwi_variants.md`](isaac_sim/README_lekiwi_variants.md) for how the two USD variants were built and what they contain, including the corrections made against the real [Seeed LeKiwi Kit](https://www.seeedstudio.com/Lekiwi-Kit-p-6501.html). The original repo's full arm+camera URDF/USD (with the SO-ARM101 attached) lives upstream at the link above, not duplicated here.
+> **This is a fork of [kabilankb/lekiwi_isaacsim](https://github.com/kabilankb/lekiwi_isaacsim)**, extended with two arm-free LeKiwi variants (base + camera, base + RPLIDAR A1M8) built for training a navigation policy in Isaac Sim/Isaac Lab. See [`plan.md`](plan.md) for the full training-to-real-robot roadmap, [`isaac_sim/README_lekiwi_variants.md`](isaac_sim/README_lekiwi_variants.md) for how the two USD variants were built and what they contain (including the corrections made against the real [Seeed LeKiwi Kit](https://www.seeedstudio.com/Lekiwi-Kit-p-6501.html)), and [`isaac_lab/README.md`](isaac_lab/README.md) for the cone-avoidance navigation task code (environment, rewards, domain randomization, training/eval/export scripts, and a physical build map for the cone course) — written and ready, not yet run against a real Isaac Sim. The original repo's full arm+camera URDF/USD (with the SO-ARM101 attached) lives upstream at the link above, not duplicated here.
 
 # 🦾 Lekiwi URDF for Isaac Sim
 

@@ -62,11 +62,27 @@ def bpy_vector(co):
 
 
 def setup_light():
-    light_data = bpy.data.lights.new(name="VerifySun", type="SUN")
-    light_data.energy = 3.0
-    light_obj = bpy.data.objects.new(name="VerifySun", object_data=light_data)
-    bpy.context.collection.objects.link(light_obj)
-    light_obj.rotation_euler = (math.radians(55), 0, math.radians(35))
+    """
+    Root cause of the "flat/unlit" quirk flagged in plan.md Phase 0 (not fixed at the
+    time): a single fixed-direction SUN light can't evenly illuminate a full 360-degree
+    camera orbit -- roughly half the 12 views end up facing away from it, rendering as
+    near-silhouettes with no visible surface detail (good enough for layout/shape
+    checks, per the original note, but not for anything finer). Fixed by adding a
+    second SUN light that's re-aimed every frame to always point from the camera toward
+    the subject (a "headlamp") -- see render_views(), which updates its rotation
+    alongside the camera's each iteration. This one (VerifyFillSun) stays fixed as a
+    subtle secondary light so shading still reads as 3D, not flat headlamp-on-a-camera.
+    """
+    fill_light_data = bpy.data.lights.new(name="VerifyFillSun", type="SUN")
+    fill_light_data.energy = 1.5  # secondary -- half the headlamp's strength, just enough to keep shadows non-black
+    fill_light_obj = bpy.data.objects.new(name="VerifyFillSun", object_data=fill_light_data)
+    bpy.context.collection.objects.link(fill_light_obj)
+    fill_light_obj.rotation_euler = (math.radians(55), 0, math.radians(35))
+
+    headlamp_data = bpy.data.lights.new(name="VerifyHeadlampSun", type="SUN")
+    headlamp_data.energy = 3.0
+    headlamp_obj = bpy.data.objects.new(name="VerifyHeadlampSun", object_data=headlamp_data)
+    bpy.context.collection.objects.link(headlamp_obj)
 
     world = bpy.context.scene.world
     if world is None:
@@ -77,6 +93,8 @@ def setup_light():
     if bg:
         bg.inputs[0].default_value = (0.65, 0.65, 0.68, 1.0)
         bg.inputs[1].default_value = 1.0
+
+    return headlamp_obj
 
 
 def setup_camera(center, radius):
@@ -93,7 +111,7 @@ def point_camera_at(cam_obj, target):
     cam_obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
 
 
-def render_views(cam_obj, center, radius, out_dir):
+def render_views(cam_obj, headlamp_obj, center, radius, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     distance = radius * 3.2 + 0.3
     elev_rad = math.radians(ELEVATION_DEG)
@@ -113,6 +131,13 @@ def render_views(cam_obj, center, radius, out_dir):
         cam_obj.location = (x, y, z)
         point_camera_at(cam_obj, center)
 
+        # SUN lights only have a direction (their local -Z axis), no position -- copying
+        # the camera's exact rotation makes the headlamp shine in the same direction the
+        # camera looks (camera position -> center), so every one of the 12 views gets
+        # front-lit regardless of azimuth, not just the ones that happen to face
+        # VerifyFillSun's fixed direction.
+        headlamp_obj.rotation_euler = cam_obj.rotation_euler.copy()
+
         scene.render.filepath = os.path.join(out_dir, f"view_{i:02d}_az{int(i*360/N_VIEWS):03d}.png")
         bpy.ops.render.render(write_still=True)
         print(f"rendered {scene.render.filepath}")
@@ -122,11 +147,11 @@ for label, usd_path in TARGETS:
     print(f"=== {label}: {usd_path} ===")
     clear_scene()
     import_usd(usd_path)
-    setup_light()
+    headlamp_obj = setup_light()
     center, radius = scene_bounds()
     print(f"  scene center={center} radius={radius:.3f}")
     cam_obj = setup_camera(center, radius)
     out_dir = os.path.join(REPO, "blender_verification", label)
-    render_views(cam_obj, center, radius, out_dir)
+    render_views(cam_obj, headlamp_obj, center, radius, out_dir)
 
 print("ALL DONE. Check C:\\Users\\mwall\\lekiwi_isaacsim\\blender_verification\\")
