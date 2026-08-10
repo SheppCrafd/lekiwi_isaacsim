@@ -2,7 +2,7 @@
 
 Final component list for Phase 9, with direct checkout links and verified stock status as of **August 2026**.
 
-**Cost-reduction pass (2026-08-10):** re-priced every component *except* the Seeed LeKiwi Kit and Seeed X10 camera against the least expensive still-legitimate option findable (no counterfeits/clone listings, no unverifiable marketplace sellers) — target was a **$300–350 total build cost**. Real savings were found (RPLIDAR down $20.98, Raspberry Pi down $65–90 depending on which variant), but **the honest total still lands at ~$436–456, not $300–350** — see "Why $300–350 isn't reachable right now" below before ordering anything on the assumption the target was hit.
+**Cost-reduction pass (2026-08-10):** re-priced every component *except* the Seeed LeKiwi Kit and Seeed X10 camera against the least expensive still-legitimate option findable (no counterfeits/clone listings, no unverifiable marketplace sellers) — target was a **$300–350 total build cost**. Real savings were found (RPLIDAR down $20.98, Raspberry Pi down $60–65 by buying **8GB in-store at Micro Center**, a real option since there's one in Marietta, GA), but **the honest total still lands at ~$437–455, not $300–350** — see "Why $300–350 isn't reachable right now" below before ordering anything on the assumption the target was hit.
 
 ---
 
@@ -12,19 +12,20 @@ Final component list for Phase 9, with direct checkout links and verified stock 
 |-----------|-----------|-----|-----------|--------------|------|
 | **Seeed LeKiwi Kit 12V** (mobile base, 3D printed parts, battery) — *unchanged, excluded from this cost pass* | LeKiwi-12V | 1 | $179.00 | ⚠️ Pre-order / Limited | [Seeed Studio (JP)](https://jp.seeedstudio.com/mobile-base-c-2676.html) |
 | **Seeed X10 USB Camera 1080p** (front-facing RGB) — *unchanged, excluded from this cost pass* | X10-USB | 1 | $12.99 | ✅ In stock | [Seeed Studio](https://www.seeedstudio.com/X10-USB-wired-camera-p-6506.html) |
-| **Raspberry Pi 5 4GB** (barebone board) | RPI5-4GB | 1 | $110.00 | ✅ In stock (PiShop.us, official reseller) | [PiShop.us](https://www.pishop.us/product/raspberry-pi-5-4gb/) |
+| **Raspberry Pi 5 8GB** (barebone board) | RPI5-8GB | 1 | $114.99 | ⚠️ In-store only, Micro Center — **Marietta, GA confirmed accessible, live stock at that specific store not confirmable by automated fetch (microcenter.com blocks it, HTTP 403)** — check the site's store selector or call ahead before driving over | [Micro Center](https://www.microcenter.com/product/702589/raspberry-pi-5-8gb) |
 | **RPLIDAR A1M8-R6 360° LiDAR** (360° 2D scanner, 12m range) | A1M8-R6 | 1 | $99.00 | ✅ In stock | [Seeed Studio](https://www.seeedstudio.com/RPLiDAR-A1M8-R6-360-Degree-Laser-Scanner-Kit-12M-Range-p-4785.html) |
 
-**Total Hardware Cost (excluding shipping, taxes, mount hardware below):** ~$400.99
+**Total Hardware Cost (excluding shipping, taxes, mount hardware below):** ~$405.98
 
 ### What changed and why
 
 - **RPLIDAR: $119.98 → $99.00** (Walmart/LYK-Technology reseller → Seeed Studio direct). Real, confirmed floor price — cross-checked against Slamtec's own official AliExpress store, which also lists $99.00 for the same part, so this isn't a fluke listing, it's the genuine current price for a real (non-clone) A1M8. RobotShop's older $103.12 figure (cited in the previous pass) is no longer the cheapest verified option.
-- **Raspberry Pi 5: $175–200 → $110.00**, by dropping from 8GB to **4GB**, not by finding a cheaper 8GB source. Every authorized 8GB reseller checked this pass (PiShop.us, CanaKit, SparkFun) is still clustered at **$175–180**, not the $95 official MSRP — this is a real, industry-wide condition (Raspberry Pi's own blog has publicly acknowledged 2025–2026 memory-cost-driven price increases on every 2GB+ SKU, calling it "painful but ultimately temporary"), not a search failure. 4GB is a genuine tradeoff, not free: this project's actual on-device workload is running a *trained* policy (inference only, no on-device training — see `plan.md` Phase 10), so 4GB is very likely sufficient, but hasn't been load-tested against the real LeRobot control stack. If you want to keep 8GB, see the Micro Center option below instead of paying $175 online.
+- **Raspberry Pi 5: $175–200 → $114.99**, by buying **8GB in-store at Micro Center** instead of online. Confirmed there's a Micro Center in Marietta, GA — real, driveable option, not hypothetical. Every 8GB reseller checked *online* this pass (PiShop.us, CanaKit, SparkFun) is still clustered at **$175–180**, not the $95 official MSRP — a real, industry-wide condition (Raspberry Pi's own blog has publicly acknowledged 2025–2026 memory-cost-driven price increases on every 2GB+ SKU, calling it "painful but ultimately temporary"), not a search failure. Micro Center's $114.99 beats every online 8GB price by $60+ **and** keeps the full 8GB (no RAM tradeoff, unlike the 4GB fallback below).
+- **One real gap in this recommendation, said plainly:** microcenter.com returns HTTP 403 to automated fetches, so the $114.99 price and in-stock status above are confirmed for Micro Center generally (via search-indexed cache), not verified live for the specific Marietta store's current inventory. Micro Center's own online stock checker (by store) or a phone call before driving over is the real way to confirm before making the trip.
 
-### A real, location-dependent alternative for the Pi specifically
+### Fallback if Marietta doesn't have stock: online, 4GB, no store trip
 
-**Micro Center, in-store only:** 8GB board currently $114.99 (marked down from $125), confirmed on their own product page. That's *more RAM for barely more than the 4GB online price above* — genuinely worth it if you have a Micro Center within driving distance, since it beats every online 8GB price by $60+. Not usable if you don't (in-store purchase only, no reliable online ordering/shipping for this specific promo price, and it's a single physical chain with limited US locations). If accessible, this replaces the $110.00 line above with $114.99 for the 8GB variant instead of 4GB — a strictly better deal, not just a cheaper one.
+**Raspberry Pi 5 4GB** — $110.00 @ [PiShop.us](https://www.pishop.us/product/raspberry-pi-5-4gb/) (official reseller, in stock, ships). Real tradeoff, not free: this project's actual on-device workload is running a *trained* policy (inference only, no on-device training — see `plan.md` Phase 10), so 4GB is very likely sufficient, but hasn't been load-tested against the real LeRobot control stack. Only ~$5 cheaper than Micro Center's 8GB, so Micro Center is the better deal whenever it's actually in stock — this is purely the "don't want to drive to Marietta, or they're out of stock" option.
 
 ---
 
@@ -64,15 +65,14 @@ Doing the honest math, not the optimistic one:
 
 | Scenario | Kit + Camera (fixed) | Pi 5 | RPLIDAR | Mount hardware | **Total** |
 |---|---|---|---|---|---|
-| Cheapest reliable online (4GB Pi) | $191.99 | $110.00 | $99.00 | $31–49 | **~$432–450** |
-| Micro Center in-store (8GB Pi, if accessible) | $191.99 | $114.99 | $99.00 | $31–49 | **~$437–455** |
+| **Micro Center Marietta (8GB, recommended — confirm stock first)** | $191.99 | $114.99 | $99.00 | $31–49 | **~$437–455** |
+| Fallback: online only, no store trip (4GB) | $191.99 | $110.00 | $99.00 | $31–49 | **~$432–450** |
 
-Both land **$82–155 above the $300–350 target**, even after real savings on the two components this pass was allowed to touch (RPLIDAR: −$20.98; Pi 5: −$60 to −$90 depending on variant/source). The reason isn't a research shortfall — it's that **$191.99 of the $300–350 target is already spent on the two fixed components alone**, leaving only $108–158 for a Raspberry Pi 5 *and* a genuine RPLIDAR A1M8 *and* mount hardware, and the real current floor prices for those three ($110 + $99 + $31 = $240 at minimum) don't fit in that remaining budget no matter how much more searching happens — this was checked against multiple independent sources per component (three-plus resellers for the Pi, two independent official channels for the RPLIDAR), not a single quote taken at face value.
+Both land **$82–155 above the $300–350 target**, even after real savings on the two components this pass was allowed to touch (RPLIDAR: −$20.98; Pi 5: −$60 to −$65 via the Micro Center trip). The reason isn't a research shortfall — it's that **$191.99 of the $300–350 target is already spent on the two fixed components alone**, leaving only $108–158 for a Raspberry Pi 5 *and* a genuine RPLIDAR A1M8 *and* mount hardware, and the real current floor prices for those three ($99–115 + $99 + $31 = ~$229–245 at minimum) don't fit in that remaining budget no matter how much more searching happens — this was checked against multiple independent sources per component (three-plus resellers for the Pi, two independent official channels for the RPLIDAR), not a single quote taken at face value.
 
 **Real levers left, if you want to keep pushing toward $300–350** (none of these were applied — they'd need your sign-off, since each is a bigger tradeoff than a price swap):
 - **Drop the lidar variant entirely, ship camera-only.** The RPLIDAR ($99) and its mount hardware ($31–49) are the single biggest lever available — together they're most of the gap. This project's own `plan.md` already treats camera and lidar as two independent variants/policies, not a combined requirement, so a camera-only physical build is a real, already-supported option, not a new one.
 - **A cheaper 2D lidar than the RPLIDAR A1M8** (e.g. Slamtec's own newer/cheaper models, or a different brand entirely) — not investigated this pass, since it would mean redesigning the physical mount (`lidar_mount_block_v1.stl` is dimensioned to the A1M8's exact datasheet geometry) and re-verifying the sim's lidar sensor config against different real specs — a real engineering change, not a pure price swap.
-- **Micro Center in-store, if there's one near you** — already the best lever actually applied above; ask if you want the exact current in-store 4GB price checked too (only the 8GB in-store price was confirmed this pass).
 - **A used/refurbished Pi 5** — not investigated; secondhand marketplace listings carry real legitimacy/condition risk that "still legit" was meant to screen out, so this wasn't pursued without your explicit OK.
 
 ---
@@ -107,9 +107,9 @@ These are standard and typically already available:
 
 ## Procurement Strategy
 
-1. **Immediate (highest priority):** Order Raspberry Pi 5 4GB from PiShop.us (or check Micro Center in-store for 8GB first), X10 camera from Seeed Studio, RPLIDAR from Seeed Studio.
-   - Combined shipping time: ~7–10 days.
-   - Total cost to date: ~$222–227 (Pi + camera + RPLIDAR only, before mount hardware).
+1. **Immediate (highest priority):** Check Micro Center Marietta's stock/pickup checker (or call) for the Raspberry Pi 5 8GB ($114.99) before ordering the 4GB fallback online — order X10 camera and RPLIDAR from Seeed Studio regardless (both ship, no store trip needed).
+   - Combined online shipping time (camera + RPLIDAR): ~7–10 days. Pi 5 same-day if Micro Center has stock, ~7–10 days if falling back to the online 4GB option.
+   - Total cost to date: ~$226.98 (Pi 8GB @ Micro Center + camera + RPLIDAR), or ~$221.99 with the 4GB fallback — before mount hardware.
 
 2. **Follow-up (monitor for stock):** LeKiwi Kit from official Seeed Studio or authorized distributor.
    - Lead time: 2–6 weeks depending on source.
