@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import isaaclab.sim as sim_utils
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.sensors import MultiMeshRayCasterCfg, patterns
 from isaaclab.utils import configclass
-from isaaclab.utils.noise import GaussianNoiseCfg, UniformNoiseCfg
+from isaaclab.utils.noise import GaussianNoiseCfg
 
 from . import mdp
 from .env_cfg_base import LekiwiConeNavEnvCfgBase, LekiwiSceneCfgBase
@@ -77,14 +76,37 @@ class ObservationsCfg:
         # implemented: range noise (RPLIDAR A1M8's own datasheet doesn't publish a
         # distance-noise std, so +/-2cm gaussian is a plausible-for-a-cheap-2D-lidar
         # starting number, not a datasheet spec) via Isaac Lab's stock noise cfg;
-        # dropped returns (2% per-ray) and angular jitter (0.5deg std, modeled as a
-        # whole-scan circular shift) via mdp/observations.py:lidar_ranges's own params,
-        # since Isaac Lab's stock noise cfgs can't express either (see that function's
-        # docstring) -- unit-tested in tests/test_mdp_math.py (the underlying corruption
-        # math, not the ObsTerm wiring itself, which still needs Isaac Sim to exercise).
+        # dropped returns (2% per-ray, flat rate) and angular jitter via
+        # mdp/observations.py:lidar_ranges's own params, since Isaac Lab's stock noise
+        # cfgs can't express either (see that function's docstring). Angular jitter is
+        # now LIVE and speed-scaled -- 0.15deg std at rest, ramping to 1.5deg by the
+        # time the speed_metric hits 0.4 (roughly the robot's own max_lin_vel from
+        # mdp/actions.py) -- replacing the old flat 0.5deg-regardless-of-motion
+        # constant, matching front_camera_rgb's own still/moving shake magnitudes.
+        # Unit-tested in tests/test_mdp_math.py (the underlying corruption math, not
+        # the ObsTerm wiring itself, which still needs Isaac Sim to exercise).
+        #
+        # "Anything the robot might endure" pass (2026-08-10) adds two live per-step
+        # misread effects on top of the above: misread_prob is a per-ray chance of a
+        # spurious falsely-CLOSE reading (multipath reflection off glossy surfaces --
+        # a more dangerous failure direction than dropout's falsely-far/no-return,
+        # since it can look like a real obstacle). freeze_prob is a per-step,
+        # per-env chance of the whole scan repeating the previous step's reading
+        # verbatim (comms/firmware hiccup) -- needs env.prev_lidar_scan /
+        # env.lidar_scan_valid (cone_nav_env.py), cleared each reset by
+        # reset_lidar_scan_state below.
         ranges: ObsTerm = ObsTerm(
             func=mdp.observations.lidar_ranges,
-            params={"dropout_prob": 0.02, "angular_jitter_std_deg": 0.5},
+            params={
+                "dropout_prob": 0.02,
+                "angular_jitter_still_deg": 0.15,
+                "angular_jitter_moving_deg": 1.5,
+                "jitter_speed_at_moving_deg": 0.4,
+                "misread_prob": 0.01,
+                "misread_min_ghost_frac": 0.1,
+                "misread_max_ghost_frac": 0.6,
+                "freeze_prob": 0.01,
+            },
             noise=GaussianNoiseCfg(mean=0.0, std=0.02, operation="add"),
         )
         base_pose: ObsTerm = ObsTerm(func=mdp.observations.base_pose_2d)
@@ -108,4 +130,10 @@ class LekiwiLidarConeNavEnvCfg(LekiwiConeNavEnvCfgBase):
             func=mdp.events.randomize_sensor_mount_pose,
             mode="reset",
             params={"sensor_prim_relpath": "Robot/lidar_assembly"},
+        )
+        # Companion reset for lidar_ranges' live freeze-glitch temporal buffer -- see
+        # mdp.events.reset_lidar_scan_state's docstring. Lidar-variant only.
+        self.events.reset_lidar_scan = EventTerm(
+            func=mdp.events.reset_lidar_scan_state,
+            mode="reset",
         )

@@ -11,10 +11,19 @@ CONFIRMED (not just written from memory): this cfg shape -- single `policy:
 RslRlPpoActorCriticCfg` field, `actor_hidden_dims`/`critic_hidden_dims`, `init_noise_std`
 -- was checked against real Isaac Lab source across every tagged release from v2.1.0
 through the current v2.3.0 GA (fetched `_modules/isaaclab_rl/rsl_rl/rl_cfg.html` for
-each) and matches exactly. The one open question is forward-compatibility: Isaac Lab's
-`main` branch has already moved on to a newer actor/critic-split API (see
-agents/nature_cnn_actor_critic.py's docstring for the detail) -- if your Phase 1 install
-is newer than 2.3.0, this file may need to move to that shape too. `isaaclab_tasks.utils`
+each) and matches exactly. Forward-compatibility is no longer just an open question,
+though (2026-08-10 update): Isaac Lab's `main` branch has moved on to a newer
+actor/critic-split API, and `rsl_rl.modules.ActorCritic` is CONFIRMED missing (directly
+pip-installed and checked, both the latest rsl-rl-lib release and the exact 5.0.1
+Isaac Lab's `main` pins) -- see agents/nature_cnn_actor_critic.py's docstring for the
+full detail. This `RslRlPpoActorCriticCfg`-shaped cfg itself only holds hyperparameters
+(hidden_dims/activation/init_noise_std), no class import, so it may still be the right
+shape for whatever `RslRlOnPolicyRunnerCfg.policy` field format your installed
+`isaaclab_rl` actually expects -- but scripts/export_policy.py's standalone
+reconstruction of this policy (outside the training-time runner) does import
+`rsl_rl.modules.ActorCritic` directly, and that's the confirmed-broken part. If your
+Phase 1 install is newer than 2.3.0, this file may need to move to the native
+`RslRlMLPModelCfg` shape too. `isaaclab_tasks.utils`
 (used in scripts/train.py and scripts/play.py) is confirmed real and current; the
 `isaaclab_tasks.utils.wrappers.rsl_rl` path this comment used to mention as an older-
 install fallback was not confirmed to exist and shouldn't be assumed.

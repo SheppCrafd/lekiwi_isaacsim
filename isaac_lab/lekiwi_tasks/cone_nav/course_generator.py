@@ -2,9 +2,11 @@
 Procedural cone-avoidance course generator (plan.md Phase 4 + Phase 6).
 
 Pure numpy, no Isaac Sim / omni imports -- deliberately, so it can be unit-tested
-outside Isaac Sim (see isaac_lab/tests/test_course_generator.py) and so the same
-generator can be reused by both the Isaac Lab reset-event code (events.py) and any
-offline tooling (course previews, held-out eval seed export for Phase 8).
+outside Isaac Sim (see isaac_lab/tests/test_course_generator.py, added 2026-08-10 --
+an earlier version of this docstring pointed here before that file actually existed,
+a real dangling reference caught during a bug scan) and so the same generator can be
+reused by both the Isaac Lab reset-event code (events.py) and any offline tooling
+(course previews, held-out eval seed export for Phase 8).
 
 "~1,000,000 procedurally generated environments" (plan.md) isn't 1M baked assets --
 it's this generator's seed space. A course is fully determined by an integer seed, so
@@ -59,7 +61,7 @@ class CourseGeneratorCfg:
 
     goal_radius_m: float = 0.35
     # Robot's own bounding-circle clearance radius. The base plate spans roughly
-    # +/-0.10m and the wheels sit at a 118mm closest-approach-to-center
+    # +/-0.10m and the wheels sit at a 117.6mm closest-approach-to-center
     # (isaac_sim/README_lekiwi_variants.md), so 0.16m covers the physical footprint;
     # +0.04m safety margin below (robot_clearance_margin_m) accounts for approach
     # trajectories, not just static overlap.
@@ -106,7 +108,16 @@ class CourseGenerationError(RuntimeError):
     """Raised when max_generation_attempts is exhausted without a valid layout."""
 
 
-def generate_course(seed: int, cfg: CourseGeneratorCfg = CourseGeneratorCfg()) -> CourseLayout:
+def generate_course(seed: int, cfg: CourseGeneratorCfg | None = None) -> CourseLayout:
+    # cfg defaults to None, not CourseGeneratorCfg() directly -- a mutable dataclass
+    # instance as a function default is evaluated ONCE at import time and shared
+    # across every call that doesn't pass cfg explicitly (found by static analysis,
+    # not by reading the code -- every real call site in this repo already passes
+    # cfg explicitly, so this was a latent footgun, not an active bug: nothing here
+    # ever mutates cfg in place, but a future change that did would silently corrupt
+    # state across unrelated calls). Constructing fresh per call is the standard fix.
+    if cfg is None:
+        cfg = CourseGeneratorCfg()
     rng = np.random.default_rng(seed)
     for _ in range(cfg.max_generation_attempts):
         layout = _generate_candidate(seed, rng, cfg)

@@ -24,6 +24,10 @@ share any of this risk:
   determinism), including after two real bugs were caught by that testing, not by
   inspection (an axis-swap bug in the reachability grid, and a spawn-placement gap
   versus plan.md's own task spec). See its module docstring for the seed convention.
+  **`tests/test_course_generator.py`** (added 2026-08-10, during a bug scan) persists a
+  fast slice of this (300 seeds + two hand-built regression tests for the axis-swap
+  bug specifically) as a real, routinely-runnable test — the module docstring used to
+  point at this file before it existed, a real dangling reference, now fixed.
 - **`scripts/render_course_map.py`** — also pure numpy + matplotlib, generates
   `hero_course.png`, a dimensioned real-world build reference (12ft × 20ft, 8 identical
   cones, fixed end zone, spawn-anywhere safe zone) for building a physical course.
@@ -68,10 +72,10 @@ Remaining risk, real and current, not resolved by this pass:
 
 | File | Risk |
 |---|---|
-| `cone_nav/agents/nature_cnn_actor_critic.py` + `rsl_rl_ppo_camera_cfg.py` | Targets rsl_rl's OLD single-class ActorCritic API (confirmed to match every tagged release through 2.3.0). But Isaac Lab's `main` branch already pins `rsl-rl-lib==5.0.1` and has a NATIVE `RslRlCNNModelCfg`/`RslRlMLPModelCfg` path that would replace this entire custom class — confirmed to exist, but its multi-observation-group routing (image group vs. proprioceptive group) isn't confirmed. **Check for `RslRlCNNModelCfg` first in Phase 1** before using this file — see its docstring for the concrete cfg shape to try. |
+| `cone_nav/agents/nature_cnn_actor_critic.py` + `rsl_rl_ppo_camera_cfg.py` + `scripts/export_policy.py` | Targets rsl_rl's OLD single-class ActorCritic API — **CONFIRMED GONE (2026-08-10), not just a forward-compat guess**: pip-installed and inspected both the latest rsl-rl-lib (5.4.2) and the exact 5.0.1 Isaac Lab's `main` pins; `rsl_rl.modules.ActorCritic` doesn't exist in either. The NATIVE `RslRlCNNModelCfg`/`RslRlMLPModelCfg` path (confirmed to exist, in `isaaclab_rl` which isn't pip-installable standalone to verify further) is now the one to check FIRST in Phase 1, not a fallback — its multi-observation-group routing (image group vs. proprioceptive group) still isn't confirmed. `export_policy.py`'s lidar path now fails with a clear, actionable error if it hits the missing import, rather than a bare `ImportError`. |
 | `cone_nav/mdp/events.py` | `randomize_sensor_mount_pose` mutates a sensor prim's transform post-creation via raw `pxr` — may need a re-initialize call depending on Isaac Sim version, or may need to move to a static per-scene-build offset instead of per-episode. Not researchable further without a live Kit process to test against. |
 | `cone_nav/env_cfg_lidar.py` | `MultiMeshRayCasterCfg` confirmed to exist (see above), but `RaycastTargetCfg`'s exact field semantics (`is_shared`, `merge_prim_meshes`) are a best-effort guess, not confirmed. |
-| `scripts/train.py` / `play.py` | `extras["log"]` termination-rate key names (e.g. `Episode_Termination/success`) are still an assumed format, not confirmed against a real run — print one dict and check before trusting `play.py`'s printed success rate. |
+| `scripts/train.py` | `extras["log"]` termination-rate key names (e.g. `Episode_Termination/success`) are still an assumed format, not confirmed against a real run — print one dict and check if you rely on that logging path. (`play.py` no longer needs this guess, 2026-08-10 — it now reads `env.unwrapped.termination_manager.get_term(name)` directly, a real per-env signal rather than a parsed log key, though that call itself is still unverified against a real install.) |
 
 None of this is a reason not to use the code — it's the same "here's what's provisional,
 here's why" discipline the rest of the project already runs on, now with a lot less
@@ -99,6 +103,156 @@ FOV/focal length); the hero course build was regenerated with 14 cones instead o
 and `blender_verify_12_views.py`'s flat/unlit bug got a real root-cause fix (see
 plan.md Phase 0) even though it can't be run here to confirm.
 
+## Third pass (2026-08-10, same day, live sensor effects)
+
+Closed the specific gap the second pass's own notes above flagged as still open:
+camera-side structured corruption (motion blur) and the difference between the
+existing per-EPISODE sensor mount jitter (`mdp/events.py:randomize_sensor_mount_pose`,
+a fixed offset for the whole episode, modeling assembly tolerance) and genuinely LIVE,
+per-step jitter that reacts to the robot's current speed. Added:
+
+- `mdp/_pure_math.py`: `speed_metric` (combines body-frame linear + angular speed into
+  one scalar), `shake_std_from_speed`/`blur_weight_from_speed` (map that speed to a
+  still/moving-interpolated magnitude), `apply_pixel_shake` (vectorized per-env
+  circular image roll — gather-indexing, not a python loop, since image tensors are
+  ~1000x larger per-env than a lidar scan and this runs every step for thousands of
+  envs), `apply_motion_blur` (exponential temporal frame blend), and
+  `apply_lidar_angular_jitter_variable_std` (the existing angular-jitter model, but
+  with a per-env std instead of one shared float). All six are pure torch, unit-tested
+  in `tests/test_mdp_math.py` (9 new tests, 24/24 total passing) — same "actually run,
+  no isaacsim needed" category as the rest of that file, not just reasoned through.
+- `mdp/observations.py:front_camera_rgb` now applies live mechanical shake (image
+  content shift) and motion blur (temporal blend against `env.prev_camera_frame`) on
+  every step, magnitude driven by current base speed — sharp and steady at rest,
+  progressively shaky/smeared while moving. `mdp/observations.py:lidar_ranges`'s
+  angular jitter is now the same speed-scaled shape instead of a flat constant.
+- New state this required: `cone_nav_env.py` owns `prev_camera_frame` (lazily
+  allocated, this class doesn't know the camera's resolution) and
+  `camera_frame_valid` (a bool per env); `mdp/events.py:reset_camera_frame_state`
+  (mode="reset", camera-variant only) clears the latter so a fresh episode's first
+  frame never blends against the previous episode's last one.
+- Also folded in, same day, same session: the wheel-mounting-radius correction
+  (118mm → 117.6mm, all three wheels, both USD files) described in
+  `isaac_sim/README_lekiwi_variants.md`'s wheel-geometry section — not code in this
+  directory, but the same "close out a still-open gap found this session" pattern.
+
+**New risk, same category as the rest of this table:** `env.prev_camera_frame` stores
+a full `(N, H, W, 3)` float tensor per camera-variant training run (2500 envs × 480×640×3
+× 4 bytes ≈ 2.9GB at default resolution) — additional VRAM pressure on top of the
+camera-variant memory question Phase 3/4 already flagged as unconfirmed at 2500 envs on
+an A100 40GB. Untested, not just unvalidated-constants risk like the rest of this pass's
+additions — this is the first thing to check in Phase 2 if the camera variant doesn't
+fit in memory, before dropping `num_envs` for an unrelated reason.
+
+## Fourth pass (2026-08-10, same day, "anything the robot might endure")
+
+Explicit ask: simulate real-world failure modes beyond generic noise — camera glare,
+lens smudges, lidar misreads, voltage spikes, "anything." Scoped to a bounded,
+physically-grounded set (not literally infinite) and implemented the same way as the
+third pass: pure, unit-tested math in `_pure_math.py`, wired through
+`observations.py`/`actions.py`/`events.py`.
+
+- **Camera** (`front_camera_rgb`, mostly per-episode constants from
+  `mdp/events.py:randomize_camera_defects`): lens glare (`apply_lens_glare` +
+  `glare_intensity_from_heading` — brightness wash-out, LIVE per-step since it depends
+  on current heading vs. this episode's fixed random sun azimuth), lens smudge
+  (`apply_lens_smudge` — static per-episode patch, absent in 70% of episodes by
+  default), exposure/white-balance drift (`apply_exposure_white_balance`), dead/hot
+  pixels (`apply_dead_pixels` — 0-3 stuck photosites/episode). Applied in physical
+  capture order: shake/blur (third pass) → glare → smudge → exposure/WB → dead pixels
+  (a stuck photosite ignores everything upstream of it) → Isaac Lab's own pixel-value
+  noise wrapper.
+- **Lidar** (`lidar_ranges`, both LIVE per-step): spurious short-range misreads
+  (`apply_lidar_misreads` — simulated multipath reflection; deliberately the more
+  dangerous falsely-CLOSE direction, distinct from dropout's falsely-far/no-return),
+  whole-scan freeze glitches (`apply_lidar_freeze` — repeats the previous scan
+  verbatim, modeling a comms/firmware hiccup; needs `env.prev_lidar_scan`/
+  `lidar_scan_valid`, same temporal-buffer pattern as the camera's motion-blur state,
+  cleared each reset by `mdp/events.py:reset_lidar_scan_state`).
+- **Actuation:** a voltage/wattage brownout term was built here (a live per-step
+  transient power-loss effect in `mdp/actions.py`'s `BodyVelocityAction`) and then
+  **removed the same day, by explicit direction**: an unexpected power drop on the
+  real robot is a wiring/electrical-integration fault on the builder's own end, not
+  an environmental condition worth training the policy to tolerate. Not implemented.
+- All 8 remaining new pure functions unit-tested (`tests/test_mdp_math.py`, 12 new
+  tests, **36/36 total passing**).
+- Genuinely NOT covered, by scope choice, not oversight: lens distortion (geometric
+  warp), compression artifacts, humidity/condensation, thermal derating, and (per the
+  removal above) any actuation-side power/voltage failure. "Anything the robot might
+  endure" was interpreted as a bounded, physically-reasoned set of *environmental*
+  conditions worth actually building well — not a claim of literal completeness, and
+  deliberately excluding failure modes that are really about build/wiring quality
+  rather than the world the robot operates in.
+- **Same-day cross-check, not new code:** the X10 camera's real resolution is now
+  confirmed (Seeed's own product page: 1080p / 1920x1080) — `env_cfg_camera.py` and
+  `deploy/lekiwi_policy_runner.py` both already deliberately operate at 640x480 for
+  training-time VRAM reasons; now documented as a deliberate downsample in both files
+  rather than an unexplained mismatch. FOV/focal-length/sensor-size are still
+  genuinely unpublished anywhere, re-confirmed against the exact same product page.
+
+## Fifth pass (2026-08-10, same day, bug scan + fixes)
+
+A deliberate "find real bugs without a running Isaac Sim" pass: compiled every `.py`
+file in the project, ran the full test suite, independently stress-tested
+`course_generator.py` (8000 fresh seeds via a throwaway script, 0 failures — see below
+for where a slice of this got persisted), and read every remaining file by hand,
+cross-referencing signatures/shapes/the real USD's joint graph across file boundaries.
+Found and fixed:
+
+- **SEVERE, now fixed: `rewards.py`/`terminations.py` read a robot position that never
+  moved.** All of `approach_goal_potential`, `success_bonus`, `goal_reached_and_held`,
+  and `out_of_bounds` computed "the robot's position" from `asset.data.root_pos_w` —
+  the articulation ROOT's world pose. Verified directly against the real USD's joint
+  graph (`pxr`, both `usd/lekiwi_camera.usd` and `usd/lekiwi_lidar.usd`): the root link
+  is `/LeKiwi/world`, anchored to the global frame via a `FixedJoint` with an empty
+  `body0` and carrying `RigidBodyAPI` (while `/LeKiwi` itself, where
+  `ArticulationRootAPI` sits, has none) — so PhysX resolves the real root body to
+  `world`, which sits at the *top* of the chain (`world -> base_x_link -> base_y_link
+  -> base_theta_link -> base`) and is never driven by anything. `root_pos_w` was
+  therefore a per-env constant (`robots/lekiwi.py`'s `InitialStateCfg.pos`), not the
+  robot's actual driven position — meaning reward shaping gave ~zero signal and both
+  terminations essentially never fired, regardless of where the robot actually drove.
+  `mdp/observations.py:base_pose_2d` (written independently, at a different time) had
+  already gotten this right, reading `joint_pos` directly — the two implementations of
+  the same fact had silently drifted apart. Fixed by factoring out one shared
+  `mdp/_robot_state.py` (`robot_local_xy`/`robot_world_xy`), now used by all three
+  files including `observations.py` (a pure dedup there, not a behavior change).
+- **`scripts/play.py`'s success/collision counting was wrong.** It read
+  `extras["log"]` — a batch-level aggregate logged once per `env.step()` — inside a
+  per-`env_id` loop as if it were that env's own outcome, over-crediting every env in
+  `done_ids` whenever multiple eval envs finished the same step with mixed outcomes
+  (the common case at `num_eval_envs=256`). Also had a dead `env_id in done_ids` check
+  (always true — it's iterating `done_ids` itself) and declared `collisions`/
+  `out_of_bounds` counters that were never incremented or printed. Fixed by reading
+  each termination term's real per-env boolean straight from
+  `env.unwrapped.termination_manager.get_term(name)` right after `env.step()`, and by
+  actually reporting collision/out-of-bounds/timeout rates alongside success rate.
+- **`rsl_rl.modules.ActorCritic` is confirmed gone, not a hypothetical risk.**
+  `agents/nature_cnn_actor_critic.py`'s own docstring already flagged this as an open
+  forward-compat question ("Isaac Lab's `main` branch already pins `rsl-rl-lib==5.0.1`
+  and has already deleted `actor_critic.py`...") — this pass actually pip-installed
+  and inspected both the latest release (5.4.2) and 5.0.1 specifically. Confirmed:
+  `ActorCritic` doesn't exist in either; `rsl_rl.modules` only exposes the new modular
+  `MLP`/`CNN`/`GaussianDistribution` split in both. `scripts/export_policy.py`'s
+  lidar-variant export path (the only place that actually imports the old class) now
+  fails with a clear, actionable error instead of a bare `ImportError` if it hits this
+  — not rewritten to the new native `RslRlCNNModelCfg`/`RslRlMLPModelCfg` path, since
+  that lives in `isaaclab_rl` (not pip-installable standalone, can't verify its exact
+  shape from here) — separately, fixed `export_policy.py`'s reconstruction of both
+  variants to supply `num_actor_obs`/`num_critic_obs`/`num_actions` (missing
+  entirely before — these are normally injected by Isaac Lab's runner from the live
+  env at training time, absent when reconstructing the network standalone) and reduced
+  the camera path's hardcoded-hyperparameter duplication by sourcing from
+  `LekiwiCameraPPORunnerCfg.policy` directly instead of a second hand-copied literal.
+- **`course_generator.py`'s own module docstring pointed at a test file that didn't
+  exist** (`isaac_lab/tests/test_course_generator.py`) — the "5000+ seeds tested" claim
+  in this README had no persisted script backing it up either. Fixed by adding that
+  file for real: 300 seeds (fast enough for routine runs) plus two hand-built
+  regression tests targeting the exact axis-swap bug class `_goal_reachable`'s own
+  docstring already describes catching once. The larger 8000-seed throwaway
+  verification from this pass isn't itself persisted (kept routine test time short)
+  but reproduced 0 failures, matching the original claim.
+
 ## Layout
 
 ```
@@ -112,10 +266,10 @@ lekiwi_tasks/
     env_cfg_lidar.py          + MultiMeshRayCaster lidar sensor, range observation group
     mdp/
       _pure_math.py            tensor math with zero isaaclab dependency -- unit-tested, see tests/
-      observations.py         policy obs (sensor + proprioceptive only — no privileged state)
+      observations.py         policy obs (sensor + proprioceptive only — no privileged state); live camera shake/blur/glare + lidar jitter/misreads/freeze live here
       rewards.py               potential-based approach shaping, success-with-hold, collision, smoothness
       terminations.py          cone collision, success, out-of-bounds (time_out is Isaac Lab's built-in)
-      events.py                course regeneration, actuation latency/slip, sensor mount jitter, background clutter
+      events.py                course regeneration, actuation latency/slip, per-episode sensor mount jitter + camera defects, background clutter, temporal-buffer resets
       actions.py                body-frame vx/vy/omega -> world-frame base_x/y/theta joint targets
       curriculum.py             Phase 6 ADR ramp: anneals cone density/spacing over training
     agents/
@@ -130,7 +284,7 @@ scripts/
 deploy/
   lekiwi_policy_runner.py     Phase 10-11 on-robot inference loop SKELETON (needs real LeRobot API + hardware, Phase 9)
 tests/
-  test_mdp_math.py            unit tests for mdp/_pure_math.py -- torch only, actually run (15/15 passing)
+  test_mdp_math.py            unit tests for mdp/_pure_math.py -- torch only, actually run (36/36 passing)
 ```
 
 ## Running once Phase 1/2 access exists

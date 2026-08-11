@@ -13,6 +13,7 @@ Output goes to:
 import bpy
 import math
 import os
+from contextlib import suppress
 
 REPO = r"C:\Users\mwall\lekiwi_isaacsim"
 TARGETS = [
@@ -118,10 +119,21 @@ def render_views(cam_obj, headlamp_obj, center, radius, out_dir):
     scene = bpy.context.scene
     scene.render.resolution_x = 960
     scene.render.resolution_y = 720
-    try:
-        scene.render.engine = "BLENDER_EEVEE_NEXT"
-    except Exception:
-        pass
+    # "BLENDER_EEVEE_NEXT" only exists on Blender 4.2+; older versions use
+    # "BLENDER_EEVEE" instead. Previously a bare try/except/pass here silently
+    # swallowed the mismatch on older Blender, leaving whichever engine the scene
+    # already defaulted to with no indication anything was skipped (found by static
+    # analysis flagging the bare except, not by reading it) -- now falls back
+    # explicitly and prints which engine actually ended up active, so a wrong-engine
+    # render (e.g. flat Workbench shading, ignoring the lighting setup below) is
+    # visible in the script's own output instead of a silent surprise.
+    if hasattr(scene.render, "engine"):
+        with suppress(TypeError):
+            scene.render.engine = "BLENDER_EEVEE_NEXT"
+        if scene.render.engine != "BLENDER_EEVEE_NEXT":
+            with suppress(TypeError):
+                scene.render.engine = "BLENDER_EEVEE"
+    print(f"render engine: {scene.render.engine}")
 
     for i in range(N_VIEWS):
         az = math.radians(i * (360.0 / N_VIEWS))

@@ -80,10 +80,21 @@ class CameraSensorReader(SensorReader):
     """
 
     def __init__(self, device_index: int = 0, width: int = 640, height: int = 480):
+        # width=640/height=480 is not the X10's native resolution -- Seeed's own
+        # product page confirms it's a 1080p sensor (1920x1080) -- it's a deliberate
+        # match to what the policy was actually TRAINED on
+        # (env_cfg_camera.py:LekiwiCameraSceneCfg.front_camera, downsampled from
+        # native 1080p there for training-time VRAM reasons, see that file's own
+        # comment). Requesting 640x480 directly from the UVC driver via
+        # CAP_PROP_FRAME_WIDTH/HEIGHT below (if the driver honors it) is preferred
+        # over capturing at 1080p and downsampling in software here -- less work per
+        # frame on the Pi, and avoids a second place this resolution could drift out
+        # of sync with what training used.
         # TODO(hardware): the Seeed X10 is a standard UVC USB camera per BoM.md, so
         # cv2.VideoCapture(device_index) is the likely path -- confirm the actual
-        # /dev/videoN index and that V4L2 exposes 640x480 without needing a format
-        # conversion once the camera is in hand.
+        # /dev/videoN index and that V4L2 actually honors the requested 640x480 mode
+        # (rather than silently capturing at 1080p and needing a software resize
+        # added here) once the camera is in hand.
         import cv2
 
         self._cap = cv2.VideoCapture(device_index)
@@ -169,7 +180,7 @@ class LeKiwiRobotInterface:
           base_radius=0.125, max_raw=3000)` -- as a reference for the wheel
           inverse-kinematics math instead of re-deriving it. Side note, not a bug:
           LeRobot's own default `base_radius=0.125m` (125mm) lands close to this
-          project's independently photo/measurement-derived wheel radius (118mm,
+          project's independently photo/measurement-derived wheel radius (117.6mm,
           isaac_sim/README_lekiwi_variants.md) -- a reassuring cross-check between two
           unrelated sources, not a discrepancy to resolve.
 

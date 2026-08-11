@@ -135,6 +135,39 @@ surfaced two real problems, fixed directly in the USD with `pxr`:
      `PhysicsRigidBodyAPI` applied — pure visual/geometry, no articulation — so it's a
      reference point for checking geometry, not a candidate to replace this project's
      physics-ready asset.
+   - **Superseded (2026-08-10, same day): 118mm → 117.6mm, all three wheels, both USD
+     files.** Not a re-derivation of "the correct radius" from scratch — a direct,
+     explicit correction against a specific pixel-measured reference distance in
+     Seeed's real product photo (screenshot of the Seeed Studio product page,
+     top-down shot), requested and confirmed at the specific value 117.6mm. Measured
+     via: a robust least-squares circle fit to the base plate's own outer boundary in
+     the photo (877 boundary points after iteratively excluding the flat-cut chord
+     near the battery bay, converged center/radius), scaled to real mm using the
+     photo's mounting-hole grid spacing — cross-checked directly against this exact
+     mesh's real hole positions (`camera_base_base_plate_layer1_v5.stl`, 61 holes
+     confirmed on an exact 20.000000mm ± 0.0000007mm grid, extracted from the actual
+     STL vertex data, not assumed) — and a single isolated reference pixel in the
+     screenshot. Honest caveat this photo-measurement round didn't have: cross-
+     validating the pixel scale against the plate's own known-exact radius
+     (107.935mm, same circle-fit method applied to the real mesh boundary, see fix
+     #3's own CAD-vs-photo methodology above) gave a ~2% different scale than the
+     hole-grid-based one (117.6mm vs. ~115.3mm) — most likely mild lens/perspective
+     distortion in the product photo (outer plate edge vs. inner hole grid aren't at
+     the same optical radius from the lens), not resolved further; 117.6mm was used
+     as directed, not silently reconciled to the other candidate.
+     Mechanically identical procedure to the 118mm change above: radial scale only
+     (`new_pos = old_pos * (0.1176 / old_radius)`), each wheel's own angle preserved
+     exactly, applied as one rigid delta translation to the full wheel-drive subsystem
+     per wheel — `wheel_back`/`wheel_left`/`wheel_right` Xform (already bundles wheel
+     body + `omni_wheel_mount` + implicit hub as children), that wheel's matching
+     `fix_*_wheel` joint's `physics:localPos0` (verified to match the Xform translate
+     exactly after the edit — a physics joint holding the OLD position while the
+     visual mesh shows the NEW one would fight itself at simulation time), and that
+     wheel's `drive_motor_mount_v11*`/`ST3215_Servo_Motor_v1*` pair (visual +
+     collision, same `_2`→back/none→left/`_1`→right matching as the 118mm fix) — done
+     via the real `pxr` USD API directly against both `.usd` files, not hand-edited.
+     Verified after: all three wheels read back at exactly 117.600000mm on both
+     `lekiwi_camera.usd` and `lekiwi_lidar.usd`.
 
 ## Camera (lekiwi_camera.usd)
 

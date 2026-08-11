@@ -6,20 +6,25 @@ actually training PPO -- each docstring notes which gap it closes.
 Privileged state (env.goal_pos_w) is used freely in here -- rewards are allowed to
 cheat with ground truth (plan.md Phase 3). Never import anything from this module into
 observations.py.
+
+BUGFIX (2026-08-10): approach_goal_potential and success_bonus used to read the
+robot's position via a local _robot_pos_xy() that returned asset.data.root_pos_w --
+a per-env CONSTANT for this asset's fixed-base joint chain, not the robot's actual
+driven position (see mdp/_robot_state.py:robot_local_xy's docstring for the full
+root-cause). approach_goal_potential's shaping reward was therefore always ~zero
+(distance never changed step to step) and success_bonus could basically never fire --
+the dominant part of the reward signal for the actual navigation task was dead
+regardless of where the robot drove. Now read via mdp/_robot_state.py, shared with
+terminations.py (which had the identical bug, same root cause).
 """
 
 from __future__ import annotations
 
 import torch
-from isaaclab.assets import Articulation
 from isaaclab.managers import SceneEntityCfg
 
 from ._pure_math import potential_shaping, success_mask, update_hold_counter
-
-
-def _robot_pos_xy(env, robot_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
-    asset: Articulation = env.scene[robot_cfg.name]
-    return asset.data.root_pos_w[:, :2]
+from ._robot_state import robot_world_xy
 
 
 def approach_goal_potential(env, robot_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
@@ -37,7 +42,7 @@ def approach_goal_potential(env, robot_cfg: SceneEntityCfg = SceneEntityCfg("rob
     than reusing this term's side effect, so term ordering in the reward manager cfg
     doesn't matter for correctness.
     """
-    pos = _robot_pos_xy(env, robot_cfg)
+    pos = robot_world_xy(env, robot_cfg)
     dist = torch.linalg.norm(pos - env.goal_pos_w[:, :2], dim=-1)
     shaped = potential_shaping(env.prev_dist_to_goal, dist)
     env.prev_dist_to_goal = dist
@@ -59,7 +64,7 @@ def success_bonus(
     threshold is first crossed, using a mask rather than `>=` alone so it can't re-fire
     every subsequent step the robot happens to stay parked.
     """
-    pos = _robot_pos_xy(env, robot_cfg)
+    pos = robot_world_xy(env, robot_cfg)
     dist = torch.linalg.norm(pos - env.goal_pos_w[:, :2], dim=-1)
     inside = success_mask(dist, robot_footprint_radius, env.goal_radius)
 

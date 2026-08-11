@@ -5,17 +5,19 @@ what you think is best': use the standard Nature CNN encoder (3 conv layers, cha
 32->64->64, strides 4/2/1, ReLU activations, flatten) ahead of the same [64, 64]
 actor/critic MLP heads").
 
-UPDATE (post-research, see isaac_lab/README.md's risk table): this custom class targets
-rsl_rl's OLD single-class ActorCritic API, confirmed via source research to match every
-*tagged* Isaac Lab release through 2.3.0 GA (`isaaclab_rl.rsl_rl.RslRlPpoActorCriticCfg`,
-`actor_hidden_dims`/`critic_hidden_dims`, one shared `policy` field). That's still the
-safer target for this file. BUT: Isaac Lab's own `main` branch already pins
-`rsl-rl-lib==5.0.1` in `source/isaaclab_rl/setup.py` (confirmed by reading that file
-directly), and rsl_rl's own `main` branch has already deleted `actor_critic.py` in favor
-of a modular `cnn.py`/`mlp.py`/`distribution.py` split -- matching a NEW, NATIVE
-`RslRlCNNModelCfg`/`RslRlMLPModelCfg` API in `isaaclab_rl.rsl_rl` (confirmed present on
-Isaac Lab's `main` docs, not on any tagged release through 2.3.0 yet) that would make
-this entire custom class unnecessary:
+UPDATE (2026-08-10): CONFIRMED BROKEN, not just a hypothetical forward-compat risk
+anymore. Directly pip-installed and inspected rsl-rl-lib: `rsl_rl.modules.ActorCritic`
+does not exist in the latest release (5.4.2) OR in 5.0.1 specifically -- the exact
+version Isaac Lab's `main` branch pins in `source/isaaclab_rl/setup.py` (confirmed by
+reading that file directly, in the research this docstring already describes below).
+Both were checked, not assumed. `rsl_rl.modules` in both only exposes the new modular
+split (`CNN`, `MLP`, `GaussianDistribution`, etc.) -- this custom class's entire "OLD
+single-class API is the safer target" premise does not hold for whatever Phase 1
+actually installs, if it matches what Isaac Lab's own setup.py already specifies. The
+`RslRlCNNModelCfg`/`RslRlMLPModelCfg` path described below is the one to use FIRST, not
+a fallback to check only if this file breaks -- this file is now the fallback-of-a-
+fallback. `scripts/export_policy.py`'s lidar export path already fails loudly with an
+actionable message if it hits the same missing import, rather than a bare ImportError.
   `RslRlCNNModelCfg(cnn_cfg=CNNCfg(output_channels=[32,64,64], kernel_size=[8,4,3],
   stride=[4,2,1], activation="relu", flatten=True), hidden_dims=[64,64],
   activation="elu", distribution_cfg=GaussianDistributionCfg(init_std=1.0))`
@@ -83,8 +85,13 @@ class NatureCnnActorCritic(nn.Module):
         num_proprio_obs: int,
         num_actions: int,
         image_shape: tuple[int, int, int] = (3, 480, 640),  # (C, H, W) -- matches CameraCfg's 640x480 (env_cfg_camera.py)
-        actor_hidden_dims: list[int] = [64, 64],
-        critic_hidden_dims: list[int] = [64, 64],
+        # Tuples, not lists -- a mutable list default here is a classic Python footgun
+        # (shared across every instance constructed without passing this arg
+        # explicitly; harmless today since make_head() below only ever iterates
+        # these, never mutates them in place, but a real risk if that ever changes).
+        # Found by static analysis, not by reading the constructor body.
+        actor_hidden_dims: tuple[int, ...] = (64, 64),
+        critic_hidden_dims: tuple[int, ...] = (64, 64),
         activation: str = "elu",
         init_noise_std: float = 1.0,
         **kwargs,

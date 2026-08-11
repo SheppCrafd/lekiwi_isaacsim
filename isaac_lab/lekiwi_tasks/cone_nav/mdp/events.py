@@ -7,6 +7,19 @@ explicit "randomized once, at generation time" requirement (not real-time jitter
 course_generator.py's own docstring for the same point). Per-step actuation noise would
 be a further extension, not implemented here (see mdp/actions.py's docstring).
 
+LIVE, per-step sensor effects (camera shake+motion-blur, lidar angular jitter that
+scales with the robot's CURRENT speed rather than a fixed episode-long constant, lidar
+misreads) live in mdp/observations.py instead, not here -- those need to react every
+single step to whatever the robot's velocity/state is that step, which is exactly what
+reset-mode EventTerms cannot do (they only fire once, at episode start). reset_camera_frame_state and
+reset_lidar_scan_state below are the exceptions that live in this file despite being
+about those live per-step effects: both are still genuine reset-time actions (clearing
+stale temporal-buffer state so the live effect starts clean next episode), not the live
+effect itself. randomize_camera_defects, by contrast, is a completely ordinary
+reset-mode term -- glare direction, lens smudge, exposure/white-balance, and dead
+pixels are all real per-episode-constant properties of one camera unit, not live
+effects that happen to need a reset companion.
+
 Cone position/size scatter (Phase 6's "cone position offset" + "cone size and shape
 randomization" items) needs no separate event -- course_generator.generate_course()
 already produces a fresh scattered layout per seed, so regenerate_course() below gets
@@ -19,7 +32,7 @@ import math
 
 import torch
 from isaaclab.assets import Articulation, RigidObject
-from isaaclab.managers import EventTermCfg, SceneEntityCfg
+from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils.math import quat_from_euler_xyz
 
 from ..course_generator import TOTAL_SEEDS, TRAIN_SEED_UPPER, generate_course
@@ -178,6 +191,105 @@ def randomize_sensor_mount_pose(
         xform.AddRotateXYZOp().Set(Gf.Vec3f(*dtilt_deg[row].tolist()))
 
 
+def reset_camera_frame_state(env, env_ids: torch.Tensor) -> None:
+    """
+    Companion reset for mdp/observations.py:front_camera_rgb's motion-blur temporal
+    buffer (env.prev_camera_frame, owned by cone_nav_env.py). Without this, an env's
+    first frame after a course reset would blend against the PREVIOUS episode's last
+    frame -- a different course, a different robot pose -- producing a one-step
+    cross-episode ghosting artifact instead of a clean sharp frame at spawn.
+
+    Just clears env.camera_frame_valid for the envs being reset; front_camera_rgb
+    checks that flag and forces blend weight to 1.0 (pure sharp frame, no blur) for
+    exactly one step post-reset, then resumes normal speed-scaled blending from the
+    next step on -- so this function only needs to flip a bool, not touch the frame
+    buffer itself.
+
+    Registered only in env_cfg_camera.py's EventsCfg, not the lidar variant's --
+    lidar has no camera frame buffer to invalidate.
+    """
+    env.camera_frame_valid[env_ids] = False
+
+
+def randomize_camera_defects(
+    env,
+    env_ids: torch.Tensor,
+    glare_half_width_deg_range: tuple[float, float] = (15.0, 45.0),
+    glare_max_brightness_add_range: tuple[float, float] = (40.0, 180.0),
+    smudge_prob: float = 0.3,
+    smudge_radius_frac_range: tuple[float, float] = (0.06, 0.22),
+    smudge_opacity_range: tuple[float, float] = (0.4, 0.9),
+    exposure_gain_range: tuple[float, float] = (0.85, 1.2),
+    wb_gain_range: tuple[float, float] = (0.9, 1.1),
+    dead_pixel_count_range: tuple[int, int] = (0, 3),
+) -> None:
+    """
+    "Anything the robot might endure" pass (2026-08-10), camera side: draws fresh
+    per-episode values for every per-episode camera defect mdp/observations.py:
+    front_camera_rgb reads every step (glare direction/harshness, whether there's a
+    lens smudge this episode and where, exposure/white-balance operating point, which
+    photosites are stuck) -- see cone_nav_env.py's buffer docstring for why each of
+    these is a per-episode constant rather than a live per-step effect (they're real
+    physical properties of one camera unit, not something that changes moment to
+    moment within an episode).
+
+    smudge_prob is the one item here that's a real DESIGN choice worth calling out:
+    most episodes (70% by default) have NO smudge at all (opacity forced to 0) --
+    matching how most real camera units aren't smudged at any given moment. Without
+    this, "smudge size/opacity randomized in some range" would still put a visible
+    smudge in every single episode, which is not what "sometimes the lens is dirty"
+    actually means.
+
+    dead_pixel_count_range draws how many of cone_nav_env.MAX_DEAD_PIXELS slots are
+    active this episode (0 is the common case, by design -- most real sensor units
+    have zero stuck pixels; a handful is the exception, not withheld from most
+    envs by an activation-probability roll the way smudge is, since "how many" already
+    naturally includes zero).
+    """
+    n = len(env_ids)
+    device = env.device
+
+    env.sun_azimuth_rad[env_ids] = torch.empty(n, device=device).uniform_(-math.pi, math.pi)
+    env.glare_half_width_rad[env_ids] = torch.deg2rad(
+        torch.empty(n, device=device).uniform_(*glare_half_width_deg_range)
+    )
+    env.glare_max_brightness_add[env_ids] = torch.empty(n, device=device).uniform_(*glare_max_brightness_add_range)
+
+    has_smudge = torch.rand(n, device=device) < smudge_prob
+    env.smudge_center_frac[env_ids] = torch.rand(n, 2, device=device)
+    env.smudge_radius_frac[env_ids] = torch.empty(n, device=device).uniform_(*smudge_radius_frac_range)
+    env.smudge_opacity[env_ids] = torch.where(
+        has_smudge,
+        torch.empty(n, device=device).uniform_(*smudge_opacity_range),
+        torch.zeros(n, device=device),
+    )
+
+    env.exposure_gain[env_ids] = torch.empty(n, device=device).uniform_(*exposure_gain_range)
+    env.wb_gain[env_ids] = torch.empty(n, 3, device=device).uniform_(*wb_gain_range)
+
+    dead_counts = torch.randint(dead_pixel_count_range[0], dead_pixel_count_range[1] + 1, (n,), device=device)
+    max_slots = env.dead_pixel_active.shape[1]
+    slot_idx = torch.arange(max_slots, device=device).unsqueeze(0)  # (1, max_slots)
+    env.dead_pixel_active[env_ids] = slot_idx < dead_counts.unsqueeze(1)
+    env.dead_pixel_uv_frac[env_ids] = torch.rand(n, max_slots, 2, device=device)
+    # Stuck value is either pure white ("hot" pixel) or pure black ("dead" pixel),
+    # matching the two real failure modes of a stuck photosite -- not an arbitrary color.
+    is_hot = torch.rand(n, max_slots, 1, device=device) < 0.5
+    env.dead_pixel_value[env_ids] = torch.where(
+        is_hot, torch.full((n, max_slots, 3), 255.0, device=device), torch.zeros(n, max_slots, 3, device=device)
+    )
+
+
+def reset_lidar_scan_state(env, env_ids: torch.Tensor) -> None:
+    """
+    Companion reset for mdp/observations.py:lidar_ranges' freeze-glitch temporal
+    buffer (env.prev_lidar_scan) -- same cross-episode-bleed problem and same fix as
+    reset_camera_frame_state above, mirrored for the lidar variant's own live-glitch
+    effect. Registered only in env_cfg_lidar.py's EventsCfg.
+    """
+    env.lidar_scan_valid[env_ids] = False
+
+
 def randomize_surroundings_clutter(
     env,
     env_ids: torch.Tensor,
@@ -243,6 +355,16 @@ def randomize_surroundings_clutter(
                 # geometric clutter. See randomize_sensor_mount_pose's docstring for why
                 # pxr is used directly rather than guessing a wrapper API.
                 _set_prim_display_color(env, env_id, f"{prop_prefix}{i}", torch.rand(3).tolist())
+                # BUGFIX (2026-08-10, found by static analysis -- `scale` above was
+                # computed and silently never applied): scale via the same direct-pxr
+                # pattern as the color line just above, not write_root_pose_to_sim
+                # (Isaac Lab's RigidObject pose API is position+orientation only, no
+                # scale channel -- there'd be nothing to pass it to even if we tried).
+                # Safe specifically because these props are collision_enabled=False
+                # (env_cfg_base.py:_clutter_prop_cfg) -- purely visual kinematic
+                # boxes, so there's no PhysX collision-shape-vs-visual-size mismatch
+                # to worry about, unlike scaling a real collidable rigid body would be.
+                _set_prim_scale(env, env_id, f"{prop_prefix}{i}", scale.tolist())
             else:
                 pos = origin + torch.tensor([0.0, 0.0, -5.0], device=env.device)
                 prop.write_root_pose_to_sim(
@@ -261,3 +383,37 @@ def _set_prim_display_color(env, env_id: int, relpath: str, rgb: list[float]) ->
     if not prim.IsValid():
         return
     UsdGeom.Gprim(prim).GetDisplayColorAttr().Set([Gf.Vec3f(*rgb)])
+
+
+def _set_prim_scale(env, env_id: int, relpath: str, scale: list[float]) -> None:
+    """
+    Companion to _set_prim_display_color, same direct-pxr reasoning -- added
+    2026-08-10 fixing randomize_surroundings_clutter's dead `scale` variable (found
+    by static analysis, not by reading the code -- it was computed and passed to
+    nothing). Reuses an existing scale xformOp if this prop already has one from a
+    previous episode (idempotent across repeated calls -- calling AddScaleOp() every
+    reset without checking first would stack a new op on top of the last one each
+    time, compounding instead of replacing) rather than clearing the whole
+    xformOpOrder the way randomize_sensor_mount_pose does -- that would risk wiping
+    out whatever translate/orient ops the physics simulation itself manages for this
+    rigid body's pose, which write_root_pose_to_sim (called just before this) relies
+    on. NEEDS VERIFICATION IN A RUNNING ISAAC SIM (Phase 1/2), same caveat as every
+    other direct-pxr mutation in this file.
+    """
+    import omni.usd
+    from pxr import Gf, UsdGeom
+
+    stage = omni.usd.get_context().get_stage()
+    prim_path = f"{env.scene.env_prim_paths[env_id]}/{relpath}"
+    prim = stage.GetPrimAtPath(prim_path)
+    if not prim.IsValid():
+        return
+    xformable = UsdGeom.Xformable(prim)
+    scale_op = None
+    for op in xformable.GetOrderedXformOps():
+        if op.GetOpType() == UsdGeom.XformOp.TypeScale:
+            scale_op = op
+            break
+    if scale_op is None:
+        scale_op = xformable.AddScaleOp()
+    scale_op.Set(Gf.Vec3f(*scale))

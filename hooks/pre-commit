@@ -1,0 +1,23 @@
+#!/bin/sh
+# Auto-updates plan.md's progress block before every commit, so the checkbox
+# percentage at the top of the file is never stale. See update_plan_progress.py's
+# own module docstring for the counting rule and idempotency guarantee.
+#
+# THIS FILE IS A TEMPLATE, not the active hook -- git only runs hooks from
+# .git/hooks/ by default, and .git/hooks/ isn't version-controlled, so this
+# tracked copy exists purely so the hook survives a fresh clone / can be
+# re-installed rather than being lost. Install it with:
+#   cp hooks/pre-commit .git/hooks/pre-commit   (then chmod +x on a real POSIX shell)
+# Deliberately NOT using `git config core.hooksPath` to point git at this
+# directory directly -- that's a git config change, and this project's own
+# tooling rules treat git config as something to never modify automatically.
+
+cd "$(git rev-parse --show-toplevel)" || exit 0
+
+python update_plan_progress.py
+
+if ! git diff --quiet -- plan.md; then
+    git add plan.md
+fi
+
+exit 0

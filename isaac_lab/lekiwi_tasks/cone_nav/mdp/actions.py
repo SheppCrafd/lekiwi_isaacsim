@@ -33,10 +33,16 @@ action pipeline, not as scene EventTerms:
     randomization on the decorative fixed-joint wheels would do *nothing* to
     locomotion -- there's no contact-driven rolling to affect. Slip is instead injected
     directly into the action-to-motion mapping, as a per-env efficiency multiplier on
-    commanded velocity. Both are randomized once per episode by
+    commanded velocity. Both latency and slip are randomized once per episode by
     mdp/events.py:randomize_actuation (not per-step -- that would make the dynamics
-    non-Markovian in a way the latency buffer here is specifically built to handle;
-    true per-step actuation noise is a further extension, not implemented here).
+    non-Markovian in a way the latency buffer here is specifically built to handle).
+
+    (A live per-step voltage/wattage brownout term briefly existed here, 2026-08-10 --
+    removed the same day: a real drop in commanded power due to a wiring/electrical
+    fault is a hardware-integration risk on the builder's own end, not an environmental
+    condition this task's domain randomization is meant to cover. If it happens on the
+    real robot, that's a wiring bug to fix, not something the trained policy should
+    have been made robust to.)
 """
 
 from __future__ import annotations
