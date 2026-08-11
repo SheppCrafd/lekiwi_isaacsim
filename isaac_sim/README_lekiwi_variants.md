@@ -177,9 +177,16 @@ bracket's lens-face position):
 
 - Position `(0.0, 0.115, 0.025)`, orientation quaternion `(0.64279, 0.76604, 0.0, 0.0)`
   (wxyz) relative to `/LeKiwi/base`.
-- `focal_length=36.5mm`, `horizontal_aperture=36.83mm` (~75° horizontal FOV),
-  `clipping_range=(0.01, 50.0)` — unchanged, still from leisaac's verified
-  `TiledCameraCfg`.
+- `focal_length=36.5mm`, `horizontal_aperture=36.83mm`, `clipping_range=(0.01, 50.0)` —
+  unchanged, still from leisaac's verified `TiledCameraCfg` for an unrelated camera, NOT
+  the real Seeed X10's actual optics. These two numbers give **~53.5° horizontal FOV**
+  (`2*atan(36.83/(2*36.5))`, the standard USD aperture/focal-length formula) — corrected
+  2026-08-10, this file previously said "~75°" here, which didn't match the formula
+  applied to these exact numbers and wasn't depended on anywhere else in the codebase.
+  Re-verified 2026-08-10 across five independent sources (product page, two separate
+  resellers, Seeed's own LeRobot/LeKiwi wiki, and the actual X10 datasheet PDF read
+  directly) that the real X10 has no published FOV/focal-length/sensor-size data at
+  all — see `env_cfg_camera.py`'s matching comment for the full source list.
 - Recommended render resolution `640×480 @ 30fps` (matches the reference config;
   resolution/fps are render-product settings, not attributes on the Camera prim itself).
 

@@ -253,6 +253,37 @@ Found and fixed:
   verification from this pass isn't itself persisted (kept routine test time short)
   but reproduced 0 failures, matching the original claim.
 
+## Sixth pass (2026-08-10, same day, camera-spec matching)
+
+Asked to make the simulated camera match the real X10's spec exactly. Re-checked
+every claim `env_cfg_camera.py`'s own confidence breakdown makes, one item at a time,
+rather than assuming the prior pass's conclusions still held:
+
+- **Resolution, position, frame rate: already correct, re-confirmed, nothing to
+  change.** 640×480 is a deliberate, matched downsample from the X10's real native
+  1920×1080 on both the sim side (`env_cfg_camera.py`) and the real deploy path
+  (`deploy/lekiwi_policy_runner.py`'s `CameraSensorReader`); both also operate at
+  30fps (sim's `update_period=1/30`, real `CONTROL_HZ=30` driving the read loop).
+  Camera position is photo-verified against Seeed's real product photo.
+- **Optics: a real bug found, not just re-confirmed as unknown.** The USD Camera
+  prim's `focal_length=36.5mm`/`horizontal_aperture=36.83mm` (still copied from an
+  unrelated LightwheelAI/leisaac camera — the real X10's optics remain genuinely
+  unpublished, now checked against five independent sources including the actual
+  datasheet PDF, not three) mathematically produce **~53.5° horizontal FOV**, not the
+  "~75°" this project's own comments claimed in two files
+  (`env_cfg_camera.py`, `isaac_sim/README_lekiwi_variants.md`). Grepped the rest of
+  the codebase first to confirm nothing (reward shaping, course generation) actually
+  depends on 75° being true — nothing does, it was pure documentation arithmetic
+  error, not a load-bearing constant. Fixed by correcting the comments to the number
+  the existing values actually produce, rather than changing the values themselves to
+  hit 75° — there's no real X10 FOV to target either way, so retargeting the numbers
+  would just be trading one unverified guess for another.
+- **Net effect:** the sim camera now matches every real, currently-knowable X10 spec
+  (resolution, position, frame rate) exactly, and its one remaining unverifiable spec
+  (FOV/focal length/sensor size — never published by Seeed anywhere, reconfirmed) is
+  now at least documented *accurately* for what it currently is, instead of carrying
+  a second, independent error on top of being an admitted placeholder.
+
 ## Layout
 
 ```

@@ -45,16 +45,31 @@ class LekiwiCameraSceneCfg(LekiwiSceneCfgBase):
     #     software) -- sim and real deployment both operate at 640x480 as the actual
     #     resolution the policy was trained on and will run against, so there's no
     #     train/inference resolution mismatch even though it's below the sensor's max.
-    #   - OPTICS (focal_length=36.5mm, horizontal_aperture=36.83mm, ~75deg horizontal
-    #     FOV, baked into the USD Camera prim): copied from LightwheelAI/leisaac's
-    #     TiledCameraCfg for an unrelated camera, NOT the real Seeed X10's actual specs
-    #     -- lowest confidence of everything here. Seeed's product page (checked
-    #     2026-08-10, including a second pass against the exact spec table a user
-    #     supplied directly -- operating temp 0-40C, USB interface, HSCODE/application
-    #     fields only) confirms there is genuinely no published FOV/focal-length/
-    #     sensor-size data for this camera anywhere, not a search gap. Best available
-    #     stand-in, not a placeholder to feel bad about -- just don't mistake it for a
-    #     verified number if e.g. tuning reward shaping against expected visible range.
+    #   - OPTICS (focal_length=36.5mm, horizontal_aperture=36.83mm, baked into the USD
+    #     Camera prim): copied from LightwheelAI/leisaac's TiledCameraCfg for an
+    #     unrelated camera, NOT the real Seeed X10's actual specs -- lowest confidence
+    #     of everything here. These two numbers actually produce ~53.5deg horizontal
+    #     FOV (2*atan(36.83/(2*36.5)) = 2*atan(0.5045) = 53.5deg -- the standard
+    #     USD/photographic aperture-and-focal-length formula), corrected 2026-08-10 from
+    #     a prior version of this comment that claimed "~75deg" -- that number didn't
+    #     match these values under the same formula and nothing else in this codebase
+    #     depends on 75deg specifically (grepped: only this comment ever said it), so
+    #     it was simply wrong arithmetic, not a differently-sourced figure. Fixing the
+    #     comment rather than retargeting the numbers to hit 75deg, since no real X10
+    #     FOV exists to target either way -- see below.
+    #     Re-verified 2026-08-10 across five independent sources (two more than the
+    #     three checked in the prior pass): Seeed's product page, a reseller page,
+    #     Seeed's own LeRobot/LeKiwi wiki (all as before), PLUS this time the actual
+    #     X10 datasheet PDF (Seeed's own "Industrial Product Datasheet", fetched and
+    #     read directly, not skimmed as HTML) and a second reseller (OpenELAB). The
+    #     datasheet's full spec table is: Product name, Operating Temperature (0-40C),
+    #     Communication Interface (USB), Applications, Part List, and compliance
+    #     HSCODEs -- literally nothing optical. Same conclusion as before, now on
+    #     firmer ground: there is genuinely no published FOV/focal-length/sensor-size
+    #     data for this camera anywhere, not a search gap. Best available stand-in, not
+    #     a placeholder to feel bad about -- just don't mistake it for a verified
+    #     number (real OR now-corrected-math) if e.g. tuning reward shaping against
+    #     expected visible range.
     front_camera: CameraCfg = CameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base/front_camera",
         update_period=1.0 / 30.0,
