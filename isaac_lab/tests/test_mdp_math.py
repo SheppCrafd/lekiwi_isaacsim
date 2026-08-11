@@ -250,6 +250,40 @@ def test_apply_lidar_angular_jitter_variable_std_per_env_magnitude():
     assert torch.equal(torch.sort(out[1])[0], torch.sort(ranges[1])[0])
 
 
+def test_apply_lidar_angular_jitter_deg_per_ray_scales_shift_magnitude():
+    """
+    Regression test for a real bug fixed 2026-08-11: deg_per_ray used to be silently
+    inferred as 360.0/num_rays inside this function, which only happened to be correct
+    while the lidar's FOV was a full 360deg sweep (360 rays / 360deg = 1deg/ray). Once
+    the FOV was narrowed to a forward-facing 90deg window (env_cfg_lidar.py, to match
+    the camera variant's FOV) that inference would have silently computed 360/90 =
+    4deg/ray for a sensor whose REAL resolution is still 1deg/ray -- understating
+    jitter shifts by 4x. Proves the now-explicit deg_per_ray parameter actually
+    controls shift magnitude as expected, not just that the function runs.
+    """
+    torch.manual_seed(4)
+    n = 2000
+    num_rays = 90
+    ranges = torch.arange(num_rays, dtype=torch.float32).unsqueeze(0).repeat(n, 1)
+    jitter_std_deg = torch.full((n,), 4.0)
+    out_correct = apply_lidar_angular_jitter_variable_std(ranges.clone(), jitter_std_deg, deg_per_ray=1.0)
+    out_old_buggy = apply_lidar_angular_jitter_variable_std(ranges.clone(), jitter_std_deg, deg_per_ray=4.0)
+
+    def mean_abs_shift(shifted: torch.Tensor) -> float:
+        # Recover each row's shift by finding where the original ray-0 value (0.0) landed.
+        positions = (shifted == 0.0).float().argmax(dim=-1)
+        signed = torch.where(positions > num_rays // 2, positions - num_rays, positions)
+        return signed.abs().float().mean().item()
+
+    mean_correct = mean_abs_shift(out_correct)
+    mean_old_buggy = mean_abs_shift(out_old_buggy)
+    assert mean_correct > 2.5 * mean_old_buggy, (
+        f"expected deg_per_ray=1.0 to shift meaningfully more ray-bins than the old "
+        f"buggy 360/num_rays=4.0 inference at the same jitter_std_deg, got "
+        f"mean_correct={mean_correct:.2f} mean_old_buggy={mean_old_buggy:.2f}"
+    )
+
+
 def test_glare_intensity_peaks_facing_source_and_vanishes_beyond_half_width():
     heading = torch.tensor([0.0, 0.1, 0.3, math.pi])
     intensity = glare_intensity_from_heading(heading, sun_azimuth_rad=torch.zeros(4), half_width_rad=0.2)

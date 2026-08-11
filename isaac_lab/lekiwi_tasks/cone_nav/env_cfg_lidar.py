@@ -24,14 +24,32 @@ class LekiwiLidarSceneCfg(LekiwiSceneCfgBase):
     robot = LEKIWI_LIDAR_CFG
 
     # RPLIDAR A1M8 real specs (Slamtec's own official datasheet, also
-    # isaac_sim/attach_sensors.py): 360 deg FOV, <=1deg angular resolution -- 360 rays
-    # at 1deg spacing approximates that (the datasheet's ~400 samples/rotation @ 5.5Hz
-    # is a bit finer; 360 is a clean round number close enough for a first pass, tune
-    # later if needed). Unlike the camera variant's optics (env_cfg_camera.py), this is
-    # a real manufacturer-published spec for the exact part actually being used, not
+    # isaac_sim/attach_sensors.py): the PHYSICAL unit spins a full 360deg, <=1deg
+    # angular resolution (the datasheet's ~400 samples/rotation @ 5.5Hz is a bit finer;
+    # 1deg spacing is a clean round number close enough for a first pass). This is a
+    # real manufacturer-published spec for the exact part actually being used, not
     # borrowed from an unrelated reference -- highest-confidence sensor spec in this
     # whole project, position AND stats both real.
     #
+    # horizontal_fov_range narrowed to a forward-facing 90deg window (-45..45), NOT the
+    # sensor's full 360deg physical sweep -- a deliberate 2026-08-11 decision, not a
+    # hardware change. The RPLIDAR still spins the full circle; this just discards
+    # everything outside the forward 90deg before the policy ever sees it, matching the
+    # camera variant's ~90deg FOV (env_cfg_camera.py) so the two sensor variants differ
+    # in modality (image vs. range) without ALSO differing in field of view -- FOV was
+    # never something a real head-to-head between the two needed to control for (they're
+    # trained and evaluated as fully independent policies, not compared against each
+    # other), but matching it removes one variable from the comparison and, as a real
+    # side effect, gives the camera variant its FOV bump too (its old ~53.5deg was
+    # already flagged as tiny for nav, see env_cfg_camera.py). Trivially reversible --
+    # flip back to (-180.0, 180.0) for a full-circle lidar if the two variants are ever
+    # meant to be compared on sensing coverage specifically, not just task performance.
+    # At horizontal_res=1.0 this yields ~90 rays, not confirmed against the real
+    # LidarPatternCfg's exact bin-count semantics (inclusive vs. exclusive endpoint) --
+    # same "unverified until Phase 2" caveat as everything else touching a live sensor
+    # cfg in this file. deploy/lekiwi_policy_runner.py and scripts/export_policy.py's
+    # hardcoded ray counts were updated to match (90, not 360) -- keep all three in sync
+    # if this range or horizontal_res ever changes again.
     # Uses MultiMeshRayCasterCfg, not the plain RayCasterCfg an earlier version of this
     # file used -- confirmed via source research (isaaclab.sensors changelog/docs), not
     # a guess: plain RayCaster's mesh data is loaded once at sensor init and "only works
@@ -53,7 +71,7 @@ class LekiwiLidarSceneCfg(LekiwiSceneCfgBase):
         pattern_cfg=patterns.LidarPatternCfg(
             channels=1,
             vertical_fov_range=(0.0, 0.0),
-            horizontal_fov_range=(-180.0, 180.0),
+            horizontal_fov_range=(-45.0, 45.0),
             horizontal_res=1.0,
         ),
         max_distance=12.0,  # RPLIDAR A1M8 max range
@@ -106,6 +124,7 @@ class ObservationsCfg:
                 "misread_min_ghost_frac": 0.1,
                 "misread_max_ghost_frac": 0.6,
                 "freeze_prob": 0.01,
+                "angular_res_deg": 1.0,  # must match LidarPatternCfg(horizontal_res=...) above
             },
             noise=GaussianNoiseCfg(mean=0.0, std=0.02, operation="add"),
         )

@@ -120,16 +120,10 @@
         <mesh filename="meshes/camera_base_ST3215_Servo_Motor_v1_1.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </visual>
-    <visual name="base_Camera_Bracket_visual">
+    <visual name="base_Camera_Mount_bracket_v1_visual">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="meshes/camera_base_Camera_Bracket.stl" scale="0.001 0.001 0.001" />
-      </geometry>
-    </visual>
-    <visual name="base_X10_USB_Camera_visual">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="meshes/camera_base_X10_USB_Camera.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="meshes/camera_mount_bracket_v1.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </visual>
     <collision name="base_base_plate_layer1_v5_collision">
@@ -246,16 +240,10 @@
         <mesh filename="meshes/camera_base_ST3215_Servo_Motor_v1_1_1.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
-    <collision name="base_Camera_Bracket_collision">
+    <collision name="base_Camera_Mount_bracket_v1_collision">
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="meshes/camera_base_Camera_Bracket_1.stl" scale="0.001 0.001 0.001" />
-      </geometry>
-    </collision>
-    <collision name="base_X10_USB_Camera_collision">
-      <origin xyz="0 0 0" rpy="0 0 0" />
-      <geometry>
-        <mesh filename="meshes/camera_base_X10_USB_Camera_1.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="meshes/camera_mount_bracket_v1.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>

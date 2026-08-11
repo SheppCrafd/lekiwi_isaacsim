@@ -127,14 +127,22 @@ class LidarSensorReader(SensorReader):
         from rplidar import RPLidar  # placeholder import name -- confirm the real package
 
         self._lidar = RPLidar(port)
-        self._num_rays = 360  # matches env_cfg_lidar.py's LidarPatternCfg(horizontal_res=1.0)
+        # Matches env_cfg_lidar.py's LidarPatternCfg(horizontal_res=1.0,
+        # horizontal_fov_range=(-45, 45)) -- 90 rays over a forward-facing 90deg window,
+        # NOT the RPLIDAR's full 360deg physical sweep (narrowed 2026-08-11 to match the
+        # camera variant's FOV; was 360 before). The real unit still spins the full
+        # circle -- see read()'s TODO below, which now also has to DISCARD everything
+        # outside the forward 90deg, not just rebin onto a 1deg grid.
+        self._num_rays = 90
 
     def read(self) -> np.ndarray:
         # TODO(hardware): real RPLIDAR scans arrive as a stream of (quality, angle,
-        # distance) samples, not a clean fixed-360-bin array -- bin/interpolate onto
-        # the same 1-degree grid the sim's RayCaster produces (env_cfg_lidar.py) before
-        # handing this to the policy, or the observation distribution won't match what
-        # it trained on.
+        # distance) samples, not a clean fixed-bin array -- bin/interpolate onto the
+        # same 1-degree grid the sim's RayCaster produces (env_cfg_lidar.py), THEN crop
+        # to the same forward-facing -45..45deg window the sim was trained on (readings
+        # outside that window must be dropped, not fed to the policy -- it never saw
+        # anything outside that window during training), or the observation won't match
+        # what the policy trained on.
         raise NotImplementedError
 
 

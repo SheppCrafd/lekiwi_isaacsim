@@ -223,6 +223,7 @@ def lidar_ranges(
     misread_min_ghost_frac: float = 0.1,
     misread_max_ghost_frac: float = 0.6,
     freeze_prob: float = 0.01,
+    angular_res_deg: float = 1.0,
 ) -> torch.Tensor:
     """
     2D range scan, (N, num_rays). Distance from sensor origin to each ray hit,
@@ -243,7 +244,7 @@ def lidar_ranges(
         A1M8's own datasheet doesn't publish a dropout rate. Deliberately left as a
         flat rate, not speed-scaled -- dropped returns are a signal-quality effect,
         not the "shakiness" the angular-jitter term below now models live.
-      - angular jitter: modeled as a small random circular shift of the whole 360-ray
+      - angular jitter: modeled as a small random circular shift of the whole ray
         array (not independent per-ray angle noise, which isn't recoverable from a
         post-hoc range vector without the raw per-ray geometry) -- approximates the
         sensor's whole angular reference frame being very slightly offset. NOW LIVE
@@ -252,7 +253,12 @@ def lidar_ranges(
         still, intensifies greatly when moving," the same physical-vibration story as
         front_camera_rgb's pixel-shake term, applied to lidar's own whole-scan-shift
         corruption model instead of a pixel shift. Still a documented approximation,
-        not a physically exact per-ray angular noise model.
+        not a physically exact per-ray angular noise model. angular_res_deg (below)
+        must match env_cfg_lidar.py's LidarPatternCfg(horizontal_res=...) exactly --
+        this used to be silently inferred as 360/num_rays inside _pure_math.py, which
+        broke the moment the scan stopped spanning a full 360deg circle (2026-08-11,
+        when the lidar's FOV was narrowed to match the camera's); now passed explicitly
+        instead of guessed from array width.
 
     "Anything the robot might endure" pass (2026-08-10) adds two more, both LIVE
     per-step effects (unlike front_camera_rgb's episode-constant glare/smudge/
@@ -282,7 +288,7 @@ def lidar_ranges(
 
     speed = _base_speed_metric(env, robot_cfg)
     jitter_std_deg = shake_std_from_speed(speed, angular_jitter_still_deg, angular_jitter_moving_deg, jitter_speed_at_moving_deg)
-    ranges = apply_lidar_angular_jitter_variable_std(ranges, jitter_std_deg)
+    ranges = apply_lidar_angular_jitter_variable_std(ranges, jitter_std_deg, deg_per_ray=angular_res_deg)
 
     if env.prev_lidar_scan is None:
         env.prev_lidar_scan = ranges.clone()

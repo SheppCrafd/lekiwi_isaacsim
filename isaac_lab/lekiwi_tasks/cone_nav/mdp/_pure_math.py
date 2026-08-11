@@ -54,12 +54,31 @@ def apply_lidar_dropout(ranges: torch.Tensor, dropout_prob: float, max_range: fl
     return torch.where(dropped, torch.full_like(ranges, max_range), ranges)
 
 
-def apply_lidar_angular_jitter(ranges: torch.Tensor, jitter_std_deg: float) -> torch.Tensor:
-    """Whole-scan circular shift by a small random number of ray-bins, per env (row)."""
+def apply_lidar_angular_jitter(ranges: torch.Tensor, jitter_std_deg: float, deg_per_ray: float = 1.0) -> torch.Tensor:
+    """
+    Whole-scan circular shift by a small random number of ray-bins, per env (row).
+
+    deg_per_ray must be the sensor's REAL angular resolution (env_cfg_lidar.py's
+    LidarPatternCfg(horizontal_res=...)), not inferred from the array width. A prior
+    version of this function computed deg_per_ray = 360.0 / num_rays, silently assuming
+    the ray array always spans a full 360deg sweep -- true only by coincidence while
+    horizontal_fov_range was (-180, 180) with horizontal_res=1.0 (360 rays / 360deg =
+    1.0deg/ray, matching the real resolution anyway). Once the FOV was narrowed to a
+    forward-facing window (env_cfg_lidar.py, matching the camera variant's FOV), that
+    formula would have silently computed the wrong jitter magnitude (e.g. 4deg/ray for
+    a 90-ray/90deg window instead of the real 1deg/ray) -- caught before it shipped,
+    not after.
+
+    torch.roll's wraparound is still used even for a bounded (non-360deg) window --
+    physically wrong AT the two FOV edges (a ray jittering "past" one edge should fall
+    off the sensor's view, not teleport to the opposite edge), but the same accepted
+    simplification apply_pixel_shake's own docstring already argues for: negligible at
+    the few-ray shifts this is actually called with (std of ~0.15-1.5deg, this
+    function's own realistic range). Revisit if jitter magnitudes ever grow large
+    enough for edge-wraparound to stop being a rare, tiny artifact.
+    """
     if jitter_std_deg <= 0.0:
         return ranges
-    num_rays = ranges.shape[-1]
-    deg_per_ray = 360.0 / num_rays
     shift_rays = torch.round(torch.randn(ranges.shape[0]) * jitter_std_deg / deg_per_ray).long()
     return torch.stack([torch.roll(ranges[i], shifts=int(shift_rays[i].item())) for i in range(ranges.shape[0])])
 
@@ -158,7 +177,7 @@ def apply_pixel_shake(frame: torch.Tensor, shift_x: torch.Tensor, shift_y: torch
     return frame[batch_idx, row_idx, col_idx]
 
 
-def apply_lidar_angular_jitter_variable_std(ranges: torch.Tensor, jitter_std_deg: torch.Tensor) -> torch.Tensor:
+def apply_lidar_angular_jitter_variable_std(ranges: torch.Tensor, jitter_std_deg: torch.Tensor, deg_per_ray: float = 1.0) -> torch.Tensor:
     """
     Same whole-scan circular-shift model as apply_lidar_angular_jitter below, but
     with a PER-ENV jitter std (one value per row of `ranges`, shape (N,)) instead of
@@ -167,6 +186,10 @@ def apply_lidar_angular_jitter_variable_std(ranges: torch.Tensor, jitter_std_deg
     depends on that env's own current speed (shake_std_from_speed), not a single
     training-wide constant.
 
+    deg_per_ray: see apply_lidar_angular_jitter's docstring -- must be the sensor's
+    real angular resolution, not derived from array width (that derivation was a real
+    bug, fixed 2026-08-11 alongside narrowing the lidar's FOV to match the camera's).
+
     Kept as a separate function rather than changing apply_lidar_angular_jitter's own
     signature to accept `float | torch.Tensor` -- that function's existing
     scalar-float contract is exactly what tests/test_mdp_math.py already tests and
@@ -174,8 +197,6 @@ def apply_lidar_angular_jitter_variable_std(ranges: torch.Tensor, jitter_std_deg
     here avoids any risk of changing behavior under an already-tested, already-relied
     on signature.
     """
-    num_rays = ranges.shape[-1]
-    deg_per_ray = 360.0 / num_rays
     shift_rays = torch.round(torch.randn(ranges.shape[0], device=ranges.device) * jitter_std_deg / deg_per_ray).long()
     return torch.stack([torch.roll(ranges[i], shifts=int(shift_rays[i].item())) for i in range(ranges.shape[0])])
 

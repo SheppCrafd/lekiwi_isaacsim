@@ -45,18 +45,34 @@ class LekiwiCameraSceneCfg(LekiwiSceneCfgBase):
     #     software) -- sim and real deployment both operate at 640x480 as the actual
     #     resolution the policy was trained on and will run against, so there's no
     #     train/inference resolution mismatch even though it's below the sensor's max.
-    #   - OPTICS (focal_length=36.5mm, horizontal_aperture=36.83mm, baked into the USD
-    #     Camera prim): copied from LightwheelAI/leisaac's TiledCameraCfg for an
-    #     unrelated camera, NOT the real Seeed X10's actual specs -- lowest confidence
-    #     of everything here. These two numbers actually produce ~53.5deg horizontal
-    #     FOV (2*atan(36.83/(2*36.5)) = 2*atan(0.5045) = 53.5deg -- the standard
-    #     USD/photographic aperture-and-focal-length formula), corrected 2026-08-10 from
-    #     a prior version of this comment that claimed "~75deg" -- that number didn't
-    #     match these values under the same formula and nothing else in this codebase
-    #     depends on 75deg specifically (grepped: only this comment ever said it), so
-    #     it was simply wrong arithmetic, not a differently-sourced figure. Fixing the
-    #     comment rather than retargeting the numbers to hit 75deg, since no real X10
-    #     FOV exists to target either way -- see below.
+    #   - OPTICS (focal_length=36.5mm, horizontal_aperture=73.0mm, vertical_aperture=
+    #     54.75mm, baked into the USD Camera prim): focal_length is still the number
+    #     originally copied from LightwheelAI/leisaac's TiledCameraCfg for an unrelated
+    #     camera, NOT the real Seeed X10's actual spec -- lowest confidence of
+    #     everything here, unchanged. horizontal_aperture and vertical_aperture were
+    #     DELIBERATELY CHANGED 2026-08-11 (were 36.83mm / 15.29mm, ~53.5deg horizontal /
+    #     23.7deg vertical FOV) to 73.0mm / 54.75mm -- exactly 90deg horizontal FOV
+    #     (2*atan(73.0/(2*36.5)) = 2*atan(1.0) = 90deg) with vertical_aperture set to
+    #     match this sensor's actual 640x480 (4:3) render resolution
+    #     (54.75 = 73.0 * 480/640), which the OLD values never did either (15.29/36.83 =
+    #     0.415, nowhere near 480/640 = 0.75 -- a real latent aspect-ratio bug inherited
+    #     from the borrowed reference camera's own different resolution, silently
+    #     stretching the image, fixed as part of this same change since touching
+    #     horizontal_aperture meant touching this relationship regardless).
+    #
+    #     Reasoning for 90deg specifically: no real X10 FOV spec exists to target either
+    #     way (see the re-verification below, unchanged), so the old ~53.5deg was never
+    #     more "correct" than any other number -- it was just an accident of which
+    #     unrelated camera got borrowed from. 90deg was chosen to (a) match the lidar
+    #     variant's FOV, narrowed to the same forward-facing 90deg window the same day
+    #     (env_cfg_lidar.py) -- removing FOV as an uncontrolled difference between the
+    #     two sensor variants, even though they're trained/evaluated as fully
+    #     independent policies and were never required to match -- and (b) directly fix
+    #     the standing complaint that ~53.5deg is genuinely tiny for a nav task. This is
+    #     a SIMULATION-ONLY change -- the real physical Seeed X10 still has whatever FOV
+    #     it actually has (still unknown, still unpublished); seeing a real replacement
+    #     webcam that's ACTUALLY ~90deg is a separate, physical-hardware decision (see
+    #     plan.md Phase 9 / BoM.md for whether that was pursued and what was found).
     #     Re-verified 2026-08-10 across five independent sources (two more than the
     #     three checked in the prior pass): Seeed's product page, a reseller page,
     #     Seeed's own LeRobot/LeKiwi wiki (all as before), PLUS this time the actual
@@ -66,10 +82,7 @@ class LekiwiCameraSceneCfg(LekiwiSceneCfgBase):
     #     Communication Interface (USB), Applications, Part List, and compliance
     #     HSCODEs -- literally nothing optical. Same conclusion as before, now on
     #     firmer ground: there is genuinely no published FOV/focal-length/sensor-size
-    #     data for this camera anywhere, not a search gap. Best available stand-in, not
-    #     a placeholder to feel bad about -- just don't mistake it for a verified
-    #     number (real OR now-corrected-math) if e.g. tuning reward shaping against
-    #     expected visible range.
+    #     data for this camera anywhere, not a search gap.
     front_camera: CameraCfg = CameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base/front_camera",
         update_period=1.0 / 30.0,

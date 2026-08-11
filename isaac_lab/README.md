@@ -284,6 +284,46 @@ rather than assuming the prior pass's conclusions still held:
   now at least documented *accurately* for what it currently is, instead of carrying
   a second, independent error on top of being an admitted placeholder.
 
+## Seventh pass (2026-08-11, lidar + camera FOV matching)
+
+Asked (science-fair framing: does a 360° lidar vs. ~70-90° camera FOV mismatch affect
+the experiment?) whether the two sensor variants' FOVs should be matched. Short answer
+given first: no, it doesn't invalidate anything — the two are trained and evaluated as
+fully independent policies, never compared head-to-head, so mismatched FOV was never a
+confound. Then asked to do it anyway (cheaper than buying new hardware, and a real fix
+for "53.5° is tiny for nav" either way):
+
+- **Lidar:** `env_cfg_lidar.py`'s `horizontal_fov_range` narrowed from the full
+  `(-180, 180)` sweep to a forward-facing `(-45, 45)` (90°) window. The RPLIDAR still
+  physically spins 360° — this only changes what the trained policy is shown.
+- **Camera:** the USD Camera prim's baked-in `horizontal_aperture`/`vertical_aperture`
+  changed (via direct `pxr` edit, confirmed persisted by reopening the file from disk
+  after writing) from `36.83mm`/`15.29mm` (~53.5° horizontal FOV) to `73.0mm`/`54.75mm`
+  (exactly 90° horizontal FOV, `vertical_aperture` now also actually matching the
+  640×480 render resolution's 4:3 aspect — the old values never did, a real latent
+  stretch bug fixed as a side effect of touching this).
+- **Real bug caught along the way:** `mdp/_pure_math.py`'s
+  `apply_lidar_angular_jitter`/`_variable_std` derived the sensor's angular resolution
+  as `360.0 / num_rays`, silently assuming the ray array always spans a full 360°
+  circle. True by coincidence at the old FOV (360 rays / 360° = 1°/ray, matching the
+  real `horizontal_res=1.0`), but would have silently computed a 4x-too-coarse
+  `4°/ray` the moment the FOV narrowed to 90° (90 rays / 360° per the old formula).
+  Fixed by threading the sensor's real angular resolution through explicitly
+  (`deg_per_ray` param, `observations.py`'s new `angular_res_deg` obs-term param)
+  instead of inferring it from array width. Caught by reasoning through the change's
+  downstream effects before shipping it, then proven with a new regression test
+  (`test_apply_lidar_angular_jitter_deg_per_ray_scales_shift_magnitude`) that
+  statistically confirms the old inferred value would have understated jitter by
+  ~4x — not just that the fixed function runs without crashing.
+- Hardcoded ray-count assumptions elsewhere (`scripts/export_policy.py`'s
+  `LIDAR_NUM_RAYS`, `deploy/lekiwi_policy_runner.py`'s `_num_rays`) updated 360 → 90 to
+  match, both flagged as needing reconfirmation once Phase 2's real `LidarPatternCfg`
+  is available (exact endpoint-inclusive ray count at a 90° window, not verified here).
+- This is a simulation/training-config change only — it doesn't touch what FOV the
+  real physical X10 or a real RPLIDAR actually have. Whether the real X10 gets
+  physically replaced with a wider-FOV webcam is a separate hardware decision — see
+  `BoM.md`/`plan.md` Phase 9 for whether that was pursued this session.
+
 ## Layout
 
 ```
@@ -315,7 +355,7 @@ scripts/
 deploy/
   lekiwi_policy_runner.py     Phase 10-11 on-robot inference loop SKELETON (needs real LeRobot API + hardware, Phase 9)
 tests/
-  test_mdp_math.py            unit tests for mdp/_pure_math.py -- torch only, actually run (36/36 passing)
+  test_mdp_math.py            unit tests for mdp/_pure_math.py -- torch only, actually run (37/37 passing)
 ```
 
 ## Running once Phase 1/2 access exists
