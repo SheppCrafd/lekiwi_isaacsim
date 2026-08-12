@@ -276,6 +276,28 @@ sized against actual measurements:
   `blender_verification/camera/` renders in this repo predate this pass's fix (they're
   what caught the gap) and need to be re-rendered — same "GUI-only Blender, needs a
   human" limitation as every other render-verification step in this project.
+- **A real ~1mm hole-misalignment bug found and fixed the same day, later pass:** asked
+  to visually confirm the flange's 5 mount holes actually land on the base plate's real
+  holes (a bottom-up alignment check), rather than trusting the hole positions this
+  design had used since the original session. Directly re-measuring
+  `camera_base_base_plate_layer1_v5.stl` (cross-sectioned at 5 independent Z depths
+  through its full 7mm thickness, all in exact agreement) found the real hole grid is
+  **y=80mm** (x=-40/-20/0/20/40) and **y=100mm** (x=-20/0/20) — round numbers. The
+  bracket had been using **y=79mm**/**y=98.94mm** (and x=-19.94/20.06 on the front row)
+  since Decision 4 — off by roughly 1mm, small enough to look plausible in isolation but
+  large enough to matter: at this design's 1.75mm hole radius, a 1mm center offset
+  leaves only a ~2.5mm clear channel, too narrow for a 3mm M3 screw shaft to pass
+  through both the bracket's hole and the real plate's hole at once. Fixed by moving
+  all 5 mount holes to their exact real coordinates (0.000mm offset, confirmed by
+  direct re-measurement, not assumed from the fix). This cascaded into one geometry
+  change beyond the hole positions themselves: the crossbar's front edge moved from
+  y=101mm to y=104mm, since a hole now correctly centered at the real y=100mm (r=1.75)
+  would otherwise poke past the old y=101mm edge as an open slot rather than sitting in
+  solid material — the riser (and everything it carries) rides along on the same +3mm
+  shift unchanged. Re-verified collision-clear against all 19 other components
+  (envelope grew, so this needed a real re-check, not just the hole-position fix).
+  `generate_camera_mount_bracket_v1.py` updated to match and re-verified to reproduce
+  the new committed STL exactly.
 
 ## Lidar (lekiwi_lidar.usd), built from scratch (2026-08-09)
 

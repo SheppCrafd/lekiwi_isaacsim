@@ -32,16 +32,34 @@ here by widening the crossbar to the rails' own full x:[-46,46] width so the pie
 directly overlap before the boolean union, instead of only asserting they share a
 touching plane.
 
-Base-plate mount holes (5 total, not 6): real hole positions extracted from
-urdf/meshes/camera_base_base_plate_layer1_v5.stl via trimesh.mesh.section() in the
-original design session -- two on the rails at (x=+-40, y=79), three on the crossbar
-at (x=-19.94/0/20.06, y=98.94). Only 5 of the 6 real base-plate holes originally
-extracted are used: the frame's reshape to route around the servo mount removed the
-solid material a 6th, centered rear-row hole (x~0, y~79) would have needed, so it's
-correctly unused rather than missing.
+Base-plate mount holes (5 of 8 real holes in this footprint, corrected 2026-08-11):
+directly re-measured from urdf/meshes/camera_base_base_plate_layer1_v5.stl via
+trimesh.mesh.section(), cross-checked at 5 independent z-slices through the plate's
+full 7mm thickness (identical at every slice -- these are genuine vertical
+through-holes, not an artifact of one slice). The real hole grid in this region is
+TWO rows: y=80 (x=-40,-20,0,20,40, five holes) and y=100 (x=-20,0,20, three holes) --
+eight real holes total, not six as an earlier pass's approximate "y~=79.00mm/y~=98.94mm"
+readings had it (off by ~1mm in Y, and ~0.06mm in X on the front row -- small enough to
+look plausible in isolation, but a real, physically-blocking error: at this design's
+1.75mm hole radius, a 1mm center offset leaves only a ~2.5mm clear channel, too narrow
+for a 3mm M3 screw to pass through both the bracket's hole and the real plate's hole at
+once). Caught 2026-08-11 by directly overlaying the bracket's as-built hole centers on
+the plate's real ones (asked to visually confirm alignment) rather than trusting the
+same approximate values forward again. This design uses the SAME 5 real holes as
+before (two rails at x=+-40 on the y=80 row, three on the crossbar at x=-20/0/20 on the
+y=100 row) -- just their real, exact coordinates instead of the ~1mm-off approximation.
+Two of the y=80 row's real holes (x=-20/20) and both of the y=100 row's outer holes
+(x=+-40) are still deliberately unused, for the same servo-mount-clearance /
+frame-width reasons as before.
 
 -- Riser (holds the Arducam board) --
-Stands on the crossbar's front edge (x:[-20,20], y:[99,101], z:[2,48]).
+Stands on the crossbar's front edge (x:[-20,20], y:[102,104], z:[2,48]). The crossbar's
+own front edge moved from y=101 to y=104 as a direct consequence of the real y=100 hole
+position above -- a hole centered at y=100 with r=1.75 reaches y=101.75, past the old
+y=101 edge entirely (an open-ended slot, not a real hole); y=104 restores a real ~2.25mm
+wall of solid material beyond the hole's edge. The riser (and everything it carries --
+board holes, lens/cable cutout) simply rides along on the same +3mm shift; none of its
+own real dimensions changed.
 
 Board hole pattern (2026-08-11, corrected): SQUARE, 34x34mm pitch (the larger of two
 real pitch options), sourced directly from Arducam's own B0200 Quick Start Guide
@@ -82,7 +100,7 @@ def cyl_z(radius, x, y, z0=-5, z1=7):
     return c
 
 
-def cyl_y(radius, x, z, y0=97, y1=103):
+def cyl_y(radius, x, z, y0=100, y1=106):
     """Horizontal hole through the thin riser wall (axis along Y)."""
     c = trimesh.creation.cylinder(radius=radius, height=y1 - y0, sections=48)
     c.apply_transform(trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0]))
@@ -97,25 +115,27 @@ def build():
     right_rail = trimesh.creation.box(extents=[12, 27, 2])
     right_rail.apply_translation([40, 87.5, 1])  # x:[34,46] y:[74,101] z:[0,2]
 
-    # Full x:[-46,46] width -- directly overlaps both rails (the fix: previously
-    # x:[-30,30], leaving a disconnected 4mm gap on each side).
-    crossbar_flange = trimesh.creation.box(extents=[92, 8, 2])
-    crossbar_flange.apply_translation([0, 97, 1])  # x:[-46,46] y:[93,101] z:[0,2]
+    # Full x:[-46,46] width -- directly overlaps both rails (closes the disconnected
+    # 4mm-per-side gap). y now runs to 104, not 101, to keep real wall margin around
+    # the real y=100 front-row holes below (a hole at y=100/r=1.75 reaches y=101.75).
+    crossbar_flange = trimesh.creation.box(extents=[92, 11, 2])
+    crossbar_flange.apply_translation([0, 98.5, 1])  # x:[-46,46] y:[93,104] z:[0,2]
 
     riser_wall = trimesh.creation.box(extents=[40, 2, 46])
-    riser_wall.apply_translation([0, 100, 25])  # x:[-20,20] y:[99,101] z:[2,48]
+    riser_wall.apply_translation([0, 103, 25])  # x:[-20,20] y:[102,104] z:[2,48]
 
     solid = trimesh.boolean.union(
         [left_rail, right_rail, crossbar_flange, riser_wall], engine="manifold"
     )
 
     holes = [
-        # base-plate mount holes -- real positions, unchanged from the original design
-        cyl_z(1.75, -40, 79),
-        cyl_z(1.75, 40, 79),
-        cyl_z(1.75, -19.94, 98.94),
-        cyl_z(1.75, 0.00, 98.94),
-        cyl_z(1.75, 20.06, 98.94),
+        # base-plate mount holes -- real positions, directly re-measured from the
+        # plate mesh (2026-08-11 correction; previously off by ~1mm in Y)
+        cyl_z(1.75, -40, 80),
+        cyl_z(1.75, 40, 80),
+        cyl_z(1.75, -20, 100),
+        cyl_z(1.75, 0, 100),
+        cyl_z(1.75, 20, 100),
         # Arducam B0200 board mount holes -- real 34x34mm square pitch
         cyl_y(1.5, 17, 42),
         cyl_y(1.5, 17, 8),
