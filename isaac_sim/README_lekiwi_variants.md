@@ -221,12 +221,26 @@ sized against actual measurements:
 
 - **Base plate side:** 6 real holes extracted directly from
   `urdf/meshes/camera_base_base_plate_layer1_v5.stl` via a real mesh cross-section
-  (`trimesh.mesh.section()` → shapely interior rings), not assumed.
-- **Arducam side:** the board's real 34.0×38.0mm footprint and 16×28mm 4-hole M12
-  mounting pattern, from Arducam's own datasheet PDF for **B0201** (the 120°-FOV
-  sibling SKU in the same board family — B0200's own datasheet couldn't be located;
-  applied on the well-founded but not independently re-confirmed assumption that this
-  board family shares one PCB across FOV variants, only swapping the M12 lens).
+  (`trimesh.mesh.section()` → shapely interior rings), not assumed. Only 5 of those 6
+  are actually used by the final frame-shaped flange below — the reshape needed to
+  route around `servo_controller_mount_v3` removed the solid material a 6th, centered
+  rear-row hole would have needed, so it's correctly unused rather than missing (`BoM.md`
+  corrected from 6 to 5 M3 screws for this same reason, 2026-08-11).
+- **Arducam side (corrected 2026-08-11):** the board's real **38×38mm** footprint and a
+  real **34×34mm square** 4-hole mount pattern — sourced directly from Arducam's own
+  **B0200** Quick Start Guide (`uctronics.com/download/Amazon/B0200.pdf`, "Board Size
+  38x38mm (Hole pitch 28x28mm, 34x34mm)"), the exact SKU this project actually specs,
+  not a borrowed sibling. This replaces the original design's 16×28mm **rectangle**,
+  which had been borrowed from the B0201 sibling SKU's datasheet because B0200's own
+  couldn't be located at the time — a reasonable but wrong guess (same board family,
+  different mount pattern; B0200's real pattern is square, not a rectangle, and its
+  board is 4mm larger in both dimensions than B0201's). The 34mm pitch (the larger of
+  the two real options) was picked over 28mm per explicit instruction to use the outer
+  holes. Hole diameter still isn't published by Arducam for either pitch option, so it
+  stays a picked default (M2.5 clearance, 3.0mm) — unchanged from before, still
+  unverified. The center Ø20mm cutout (clears the M12 lens body + assumed USB cable
+  routing) is unchanged and, at the real 34mm pitch, has more margin to the nearest
+  mount hole (~24mm from center) than the old rectangle had (~16mm).
 - **A real collision found and fixed before this shipped, not after:** the first version
   bolted its rear holes almost exactly onto `servo_controller_mount_v3`'s own real
   mounting bosses (that component's real bbox: `x:[-30,30], y:[37.5,82.5], z:[0,11]mm`).
@@ -239,9 +253,29 @@ sized against actual measurements:
   servo mount's x-range, connected by a front crossbar forward of its y-max — and
   re-verified clear against all 18 other components on `/LeKiwi/base`, not just the one
   that first flagged it.
-- Still genuinely unverified, same caveat class as the lidar mount: no physical test
-  print yet, and the M2.5 hole diameter on the Arducam side is a picked default (the
-  extracted datasheet text had no explicit hole-diameter callout).
+- **A second real defect, found visually and fixed the same day (2026-08-11, later
+  pass):** the "frame" shape above was actually shipped as **three separate
+  disconnected watertight solids** (two side rails + the crossbar/riser body), not one
+  connected bracket — the crossbar's x-extent (`±30mm`) stopped 4mm short of each
+  rail's inner edge (`±34mm`), so the pieces only ever shared a touching z=0 plane, never
+  overlapping in X. Every check run against the original design (watertight, real
+  holes, collision-clear, rendered correctly) passed on each piece in isolation and
+  never caught this, because none of them tested whether the pieces were physically one
+  object — a real bracket printed this way would have been three loose parts. Caught by
+  a human looking at a Blender render (not by any of the automated checks) and
+  confirmed programmatically via `trimesh`'s `body_count` (3, not 1). Fixed by widening
+  the crossbar to the rails' own full `x:[-46,46]` width so the pieces directly overlap
+  before the boolean union, instead of only asserting a shared touching plane — the
+  fixed bracket is a single watertight body (`body_count == 1`), re-verified clear
+  against all 19 other components on `/LeKiwi/base` by the same bbox + dense
+  surface-sampling protocol. Unlike the original design, this fix's generator **is**
+  persisted: `generate_camera_mount_bracket_v1.py` (repo root) reproduces the exact
+  committed STL byte-for-byte in geometry, closing the "no generator script was
+  persisted" gap the original design explicitly flagged.
+- Still genuinely unverified: no physical test print yet. The
+  `blender_verification/camera/` renders in this repo predate this pass's fix (they're
+  what caught the gap) and need to be re-rendered — same "GUI-only Blender, needs a
+  human" limitation as every other render-verification step in this project.
 
 ## Lidar (lekiwi_lidar.usd), built from scratch (2026-08-09)
 
