@@ -172,16 +172,76 @@ surfaced two real problems, fixed directly in the USD with `pxr`:
 ## Camera (lekiwi_camera.usd)
 
 A real `UsdGeom.Camera` prim at `/LeKiwi/base/front_camera`, position corrected as
-described above (was leisaac's copied `TiledCameraCfg` offset, now the real Seeed
-bracket's lens-face position):
+described above (was leisaac's copied `TiledCameraCfg` offset, then the Seeed X10
+placeholder bracket's lens-face position, now the new Arducam bracket's front face —
+see "Camera mount replacement" below):
 
-- Position `(0.0, 0.115, 0.025)`, orientation quaternion `(0.64279, 0.76604, 0.0, 0.0)`
-  (wxyz) relative to `/LeKiwi/base`.
-- `focal_length=36.5mm`, `horizontal_aperture=36.83mm` (~75° horizontal FOV),
-  `clipping_range=(0.01, 50.0)` — unchanged, still from leisaac's verified
-  `TiledCameraCfg`.
+- Position `(0.0, 0.101, 0.025)` (updated 2026-08-11, was `(0.0, 0.115, 0.025)` for the
+  old X10 placeholder bracket), orientation quaternion `(0.64279, 0.76604, 0.0, 0.0)`
+  (wxyz, unchanged — that's the trained-policy-relevant tilt, independent of which
+  physical bracket holds the sensor) relative to `/LeKiwi/base`.
+- `focal_length=36.5mm` (unchanged, still from leisaac's `TiledCameraCfg` for an
+  unrelated camera, NOT a real spec for either the old X10 or the new Arducam),
+  `horizontal_aperture=87.0mm`, `vertical_aperture=65.25mm`, `clipping_range=(0.01,
+  50.0)`. Aperture values went through two revisions on **2026-08-11**: first
+  `36.83mm`/`15.29mm` (the inherited placeholder) to `73.0mm`/`54.75mm` for **exactly
+  90° horizontal FOV** (`2*atan(73.0/(2*36.5)) = 90°`) — picked only to match the lidar
+  variant's FOV and to fix the standing "53.5° is tiny for nav" complaint, since no real
+  X10 spec existed to target — then corrected again the same day to **`87.0mm`/
+  `65.25mm` for ~100.0° horizontal FOV** (`2*atan(87.0/(2*36.5)) = 100.001°`) once the
+  real camera changed from the X10 to the Arducam IMX291 board (see below), which
+  *does* publish a FOV: "100° Wide Angle". `vertical_aperture` keeps the same
+  aspect-ratio relationship the 90° fix established (`65.25 = 87.0 * 480/640`, matching
+  the 640×480 (4:3) render resolution — the pre-90° values' ratio, 15.29/36.83 = 0.415,
+  never matched 4:3 at all, silently stretching the image; that latent bug stays fixed
+  through both later revisions). The lidar variant's forward-facing window was widened
+  to the same 100° the same day (see the Lidar section below), so real camera spec =
+  simulated camera FOV = simulated lidar FOV, all three genuinely in agreement now,
+  not just arbitrarily matched to each other the way the 90° pass was. This aperture
+  number is still simulation-only — it doesn't independently confirm the physical
+  Arducam unit, once actually purchased, measures out to exactly 100° (marketing "wide
+  angle" FOV numbers aren't always precise) — but it's tracking a real published spec
+  for the camera actually in the BoM, which the X10-era 90° number never had (X10 FOV
+  re-verified 2026-08-10 across five independent sources — product page, two resellers,
+  Seeed's own wiki, and the actual datasheet PDF read directly — none of them publish
+  one).
 - Recommended render resolution `640×480 @ 30fps` (matches the reference config;
   resolution/fps are render-product settings, not attributes on the Camera prim itself).
+
+### Camera mount replacement (2026-08-11)
+
+The X10 was physically replaced with an **Arducam IMX291 USB2.0 board camera (SKU
+B0200, ~100° FOV)** — see `plan.md`/`plan_log.md`'s Phase 9 for the full sourcing and
+the still-unconfirmed price. The old placeholder geometry (`Camera_Bracket_visual`/
+`collision`, `X10_USB_Camera_visual`/`collision` — both simple boxes, never an accurate
+mesh of either the real X10 or its bracket) was **deleted outright** (`stage.RemovePrim`,
+explicit user instruction, not the reversible-deactivation pattern used elsewhere in
+this file) and replaced with `urdf/meshes/camera_mount_bracket_v1.stl`, a real bracket
+sized against actual measurements:
+
+- **Base plate side:** 6 real holes extracted directly from
+  `urdf/meshes/camera_base_base_plate_layer1_v5.stl` via a real mesh cross-section
+  (`trimesh.mesh.section()` → shapely interior rings), not assumed.
+- **Arducam side:** the board's real 34.0×38.0mm footprint and 16×28mm 4-hole M12
+  mounting pattern, from Arducam's own datasheet PDF for **B0201** (the 120°-FOV
+  sibling SKU in the same board family — B0200's own datasheet couldn't be located;
+  applied on the well-founded but not independently re-confirmed assumption that this
+  board family shares one PCB across FOV variants, only swapping the M12 lens).
+- **A real collision found and fixed before this shipped, not after:** the first version
+  bolted its rear holes almost exactly onto `servo_controller_mount_v3`'s own real
+  mounting bosses (that component's real bbox: `x:[-30,30], y:[37.5,82.5], z:[0,11]mm`).
+  Re-picking the same real hole row's outer holes (`x=±40mm` instead of `±19.94mm`)
+  fixed the hole-level clash but not a deeper one: the flange's solid body, once widened
+  to reach those holes, still genuinely intersected the servo mount's real geometry
+  (confirmed via dense surface-point sampling within the flange's own thickness, not
+  just a bounding-box check — 19 real sampled points landed inside the solid). Fixed by
+  reshaping the flange from a solid rectangle into a frame — two side rails outside the
+  servo mount's x-range, connected by a front crossbar forward of its y-max — and
+  re-verified clear against all 18 other components on `/LeKiwi/base`, not just the one
+  that first flagged it.
+- Still genuinely unverified, same caveat class as the lidar mount: no physical test
+  print yet, and the M2.5 hole diameter on the Arducam side is a picked default (the
+  extracted datasheet text had no explicit hole-diameter callout).
 
 ## Lidar (lekiwi_lidar.usd), built from scratch (2026-08-09)
 
@@ -279,7 +339,13 @@ to attach the real working sensor via Isaac Sim's own command API (which is guar
 correct for whatever version is actually installed) — it tries RTX Lidar first, falls
 back to the deprecated PhysX SDK Lidar, and notes the Isaac Sim 6.0+ `RaycastSensor`
 replacement. Real hardware specs used there: 360° FOV, 0.15–12m range, 5.5Hz typical
-scan rate (10Hz max), ≤1° angular resolution — all from Slamtec's own datasheet.
+scan rate (10Hz max), ≤1° angular resolution — all from Slamtec's own datasheet. This
+script's 360° matches the sensor's real physical sweep, deliberately unchanged — it's a
+raw hardware-verification tool ("does this sensor produce real scan data at all"), not
+the RL training config. The **trained policy** only ever sees a forward-facing 90°
+slice of that sweep (`isaac_lab/lekiwi_tasks/cone_nav/env_cfg_lidar.py`'s
+`horizontal_fov_range=(-45, 45)`, narrowed 2026-08-11 to match the camera variant's
+FOV) — the RPLIDAR unit itself still physically spins the full circle either way.
 
 **What's still an approximation, worth knowing before you print:**
 - The block and RPLIDAR housing are placeholder-accuracy geometry (primitives and
