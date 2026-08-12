@@ -324,6 +324,37 @@ for "53.5° is tiny for nav" either way):
   physically replaced with a wider-FOV webcam is a separate hardware decision — see
   `BoM.md`/`plan.md` Phase 9 for whether that was pursued this session.
 
+## Eighth pass (2026-08-11, real-FOV correction: 90° → 100°)
+
+The Seventh pass's 90° was picked arbitrarily (no real spec existed to target — it
+just matched the lidar to the camera and fixed "53.5° is tiny for nav"). Later the
+same day, the real front camera changed from the Seeed X10 (no published FOV
+anywhere, confirmed again) to an **Arducam IMX291 board camera**, whose own product
+listing *does* publish a FOV: **"100° Wide Angle"**. That made 90° stale — it no
+longer matched the real part actually in the BoM, even though it still matched the
+lidar. Corrected both sensors to the real number instead:
+
+- **Camera:** `env_cfg_camera.py`'s baked USD optics moved from `73.0mm`/`54.75mm`
+  (exactly 90°) to `87.0mm`/`65.25mm` (`2*atan(87.0/(2*36.5)) = 100.001°`, not as clean
+  an identity as 90°'s `tan(45°)=1` but within 0.01° of exactly 100°), same
+  `focal_length=36.5mm`, same 4:3 aspect-ratio relationship (`65.25 = 87.0 * 480/640`).
+- **Lidar:** `env_cfg_lidar.py`'s `horizontal_fov_range` widened from `(-45, 45)` to
+  `(-50, 50)` — still a forward-facing crop of the RPLIDAR's real 360° physical sweep,
+  just a wider one, ~100 rays instead of ~90 at the same `horizontal_res=1.0`.
+- Every place that hardcoded the old 90-ray assumption updated to 100:
+  `scripts/export_policy.py`'s `LIDAR_NUM_RAYS`, `deploy/lekiwi_policy_runner.py`'s
+  `_num_rays`, and the Seventh pass's own regression test
+  (`test_apply_lidar_angular_jitter_deg_per_ray_scales_shift_magnitude`, now checking
+  `360/100 = 3.6°/ray` as the bug case instead of `360/90 = 4°/ray` — same bug shape,
+  current numbers).
+- Net effect: real camera spec, simulated camera FOV, and simulated lidar FOV now all
+  genuinely agree at 100° — not just two of them arbitrarily matched to each other the
+  way the Seventh pass left things.
+- The two 3D-printable parts this project has designed (`lidar_mount_block_v1.stl`,
+  `camera_mount_bracket_v1.stl`) were also duplicated into a top-level `prints/` folder
+  for convenience — same files, just gathered in one place for whoever's doing the
+  actual printing.
+
 ## Layout
 
 ```

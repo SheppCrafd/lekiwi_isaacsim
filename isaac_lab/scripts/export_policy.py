@@ -35,16 +35,17 @@ parser.add_argument("--checkpoint", type=str, required=True)
 parser.add_argument("--out", type=str, required=True, help="Output path prefix, e.g. 'lidar_policy' -> lidar_policy.onnx / .pt")
 args = parser.parse_args()
 
-# lidar variant observation width: 90 lidar_ranges + 4 base_pose_2d + 3 base_velocity_2d
-# (mdp/observations.py), concatenated (env_cfg_lidar.py's concatenate_terms=True). 90
-# comes from LidarPatternCfg(horizontal_res=1.0) over a forward-facing -45..45 sweep
-# (env_cfg_lidar.py, narrowed 2026-08-11 to match the camera variant's ~90deg FOV --
-# was 360 over the full -180..180 sweep before that) -- update this constant too if
-# that pattern cfg ever changes. Exact count (90 vs. 91) not confirmed against the real
-# LidarPatternCfg's endpoint-inclusive semantics -- same unverified-until-Phase-2
-# caveat as the rest of this sensor's config; if Phase 2 reveals 91, fix this constant
-# and re-export, since a mismatch here would silently break the ONNX graph's input shape.
-LIDAR_NUM_RAYS = 90
+# lidar variant observation width: 100 lidar_ranges + 4 base_pose_2d + 3 base_velocity_2d
+# (mdp/observations.py), concatenated (env_cfg_lidar.py's concatenate_terms=True). 100
+# comes from LidarPatternCfg(horizontal_res=1.0) over a forward-facing -50..50 sweep
+# (env_cfg_lidar.py, narrowed 2026-08-11 to match the real Arducam camera's published
+# 100deg FOV -- was 360 over the full -180..180 sweep before that) -- update this
+# constant too if that pattern cfg ever changes. Exact count (100 vs. 101) not
+# confirmed against the real LidarPatternCfg's endpoint-inclusive semantics -- same
+# unverified-until-Phase-2 caveat as the rest of this sensor's config; if Phase 2
+# reveals 101, fix this constant and re-export, since a mismatch here would silently
+# break the ONNX graph's input shape.
+LIDAR_NUM_RAYS = 100
 NUM_PROPRIO_OBS = 7  # base_pose_2d (4) + base_velocity_2d (3), both variants
 NUM_ACTIONS = 3  # vx, vy, omega -- mdp/actions.py:BodyVelocityAction.action_dim
 

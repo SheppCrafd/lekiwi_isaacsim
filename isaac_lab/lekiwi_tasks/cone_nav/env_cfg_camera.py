@@ -45,44 +45,53 @@ class LekiwiCameraSceneCfg(LekiwiSceneCfgBase):
     #     software) -- sim and real deployment both operate at 640x480 as the actual
     #     resolution the policy was trained on and will run against, so there's no
     #     train/inference resolution mismatch even though it's below the sensor's max.
-    #   - OPTICS (focal_length=36.5mm, horizontal_aperture=73.0mm, vertical_aperture=
-    #     54.75mm, baked into the USD Camera prim): focal_length is still the number
+    #   - OPTICS (focal_length=36.5mm, horizontal_aperture=87.0mm, vertical_aperture=
+    #     65.25mm, baked into the USD Camera prim): focal_length is still the number
     #     originally copied from LightwheelAI/leisaac's TiledCameraCfg for an unrelated
-    #     camera, NOT the real Seeed X10's actual spec -- lowest confidence of
-    #     everything here, unchanged. horizontal_aperture and vertical_aperture were
-    #     DELIBERATELY CHANGED 2026-08-11 (were 36.83mm / 15.29mm, ~53.5deg horizontal /
-    #     23.7deg vertical FOV) to 73.0mm / 54.75mm -- exactly 90deg horizontal FOV
-    #     (2*atan(73.0/(2*36.5)) = 2*atan(1.0) = 90deg) with vertical_aperture set to
-    #     match this sensor's actual 640x480 (4:3) render resolution
-    #     (54.75 = 73.0 * 480/640), which the OLD values never did either (15.29/36.83 =
-    #     0.415, nowhere near 480/640 = 0.75 -- a real latent aspect-ratio bug inherited
-    #     from the borrowed reference camera's own different resolution, silently
-    #     stretching the image, fixed as part of this same change since touching
-    #     horizontal_aperture meant touching this relationship regardless).
+    #     camera, NOT a real spec for either the old X10 or the new Arducam --
+    #     lowest confidence of everything here, unchanged since first introduced.
+    #     horizontal_aperture and vertical_aperture went through two revisions on
+    #     2026-08-11 alone: first 36.83mm/15.29mm (~53.5deg horizontal / 23.7deg
+    #     vertical FOV, inherited from the borrowed reference camera) to 73.0mm/54.75mm
+    #     (exactly 90deg horizontal, chosen only to match the lidar variant's FOV --
+    #     there was no real spec to target yet at that point), then corrected again the
+    #     same day to **87.0mm / 65.25mm -- ~100.0deg horizontal FOV**
+    #     (2*atan(87.0/(2*36.5)) = 100.001deg, not the clean exact identity 90deg's
+    #     tan(45deg)=1 gave, but within 0.01deg) once the real camera changed from the
+    #     Seeed X10 (no published FOV anywhere, see re-verification below) to an
+    #     Arducam IMX291 board camera whose product listing DOES publish a FOV: "100
+    #     Degree Wide Angle" (see BoM.md). vertical_aperture keeps the same aspect-ratio
+    #     relationship as before (65.25 = 87.0 * 480/640, matching this sensor's actual
+    #     640x480 render resolution) -- the OLD pre-90deg values never held that
+    #     relationship either (15.29/36.83 = 0.415, nowhere near 480/640 = 0.75, a real
+    #     latent aspect-ratio bug inherited from the borrowed reference camera's own
+    #     different resolution, silently stretching the image), fixed as part of the
+    #     90deg change and preserved through this one.
     #
-    #     Reasoning for 90deg specifically: no real X10 FOV spec exists to target either
-    #     way (see the re-verification below, unchanged), so the old ~53.5deg was never
-    #     more "correct" than any other number -- it was just an accident of which
-    #     unrelated camera got borrowed from. 90deg was chosen to (a) match the lidar
-    #     variant's FOV, narrowed to the same forward-facing 90deg window the same day
-    #     (env_cfg_lidar.py) -- removing FOV as an uncontrolled difference between the
-    #     two sensor variants, even though they're trained/evaluated as fully
-    #     independent policies and were never required to match -- and (b) directly fix
-    #     the standing complaint that ~53.5deg is genuinely tiny for a nav task. This is
-    #     a SIMULATION-ONLY change -- the real physical Seeed X10 still has whatever FOV
-    #     it actually has (still unknown, still unpublished); seeing a real replacement
-    #     webcam that's ACTUALLY ~90deg is a separate, physical-hardware decision (see
-    #     plan.md Phase 9 / BoM.md for whether that was pursued and what was found).
-    #     Re-verified 2026-08-10 across five independent sources (two more than the
-    #     three checked in the prior pass): Seeed's product page, a reseller page,
-    #     Seeed's own LeRobot/LeKiwi wiki (all as before), PLUS this time the actual
-    #     X10 datasheet PDF (Seeed's own "Industrial Product Datasheet", fetched and
-    #     read directly, not skimmed as HTML) and a second reseller (OpenELAB). The
+    #     Reasoning for 100deg specifically: unlike the old 90deg pass (arbitrary,
+    #     chosen only to match the lidar and to fix the standing "53.5deg is tiny for
+    #     nav" complaint -- see git history), 100deg is the real Arducam's own published
+    #     FOV number, not a guess. The lidar variant's horizontal_fov_range
+    #     (env_cfg_lidar.py) was updated to the same 100deg the same day, so now: real
+    #     camera spec = sim camera FOV = lidar FOV, all three genuinely in agreement,
+    #     not just two of them arbitrarily matched to each other. This is still a
+    #     SIMULATION-side optics change -- it does not by itself confirm the physical
+    #     Arducam unit, once actually purchased, measures out to exactly 100deg (webcam
+    #     "wide angle" marketing FOV numbers are not always precise) -- but it's now
+    #     tracking a real manufacturer-published spec for the camera actually in the BoM,
+    #     which the old X10-era 90deg number never had.
+    #
+    #     X10 FOV re-verification (now historical -- the X10 is no longer the camera in
+    #     BoM.md, see above): re-verified 2026-08-10 across five independent sources
+    #     (two more than the three checked in the prior pass): Seeed's product page, a
+    #     reseller page, Seeed's own LeRobot/LeKiwi wiki (all as before), PLUS the actual
+    #     X10 datasheet PDF (Seeed's own "Industrial Product Datasheet", fetched and read
+    #     directly, not skimmed as HTML) and a second reseller (OpenELAB). The
     #     datasheet's full spec table is: Product name, Operating Temperature (0-40C),
     #     Communication Interface (USB), Applications, Part List, and compliance
-    #     HSCODEs -- literally nothing optical. Same conclusion as before, now on
-    #     firmer ground: there is genuinely no published FOV/focal-length/sensor-size
-    #     data for this camera anywhere, not a search gap.
+    #     HSCODEs -- literally nothing optical. There was genuinely no published
+    #     FOV/focal-length/sensor-size data for the X10 anywhere, not a search gap --
+    #     part of why it was dropped in favor of the Arducam, which does publish one.
     front_camera: CameraCfg = CameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base/front_camera",
         update_period=1.0 / 30.0,

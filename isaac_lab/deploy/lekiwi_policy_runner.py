@@ -128,18 +128,19 @@ class LidarSensorReader(SensorReader):
 
         self._lidar = RPLidar(port)
         # Matches env_cfg_lidar.py's LidarPatternCfg(horizontal_res=1.0,
-        # horizontal_fov_range=(-45, 45)) -- 90 rays over a forward-facing 90deg window,
-        # NOT the RPLIDAR's full 360deg physical sweep (narrowed 2026-08-11 to match the
-        # camera variant's FOV; was 360 before). The real unit still spins the full
-        # circle -- see read()'s TODO below, which now also has to DISCARD everything
-        # outside the forward 90deg, not just rebin onto a 1deg grid.
-        self._num_rays = 90
+        # horizontal_fov_range=(-50, 50)) -- 100 rays over a forward-facing 100deg
+        # window, NOT the RPLIDAR's full 360deg physical sweep (narrowed 2026-08-11 to
+        # match the real Arducam camera's published 100deg FOV; was 360 before). The
+        # real unit still spins the full circle -- see read()'s TODO below, which now
+        # also has to DISCARD everything outside the forward 100deg, not just rebin
+        # onto a 1deg grid.
+        self._num_rays = 100
 
     def read(self) -> np.ndarray:
         # TODO(hardware): real RPLIDAR scans arrive as a stream of (quality, angle,
         # distance) samples, not a clean fixed-bin array -- bin/interpolate onto the
         # same 1-degree grid the sim's RayCaster produces (env_cfg_lidar.py), THEN crop
-        # to the same forward-facing -45..45deg window the sim was trained on (readings
+        # to the same forward-facing -50..50deg window the sim was trained on (readings
         # outside that window must be dropped, not fed to the policy -- it never saw
         # anything outside that window during training), or the observation won't match
         # what the policy trained on.

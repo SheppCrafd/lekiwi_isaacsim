@@ -181,20 +181,30 @@ see "Camera mount replacement" below):
   (wxyz, unchanged — that's the trained-policy-relevant tilt, independent of which
   physical bracket holds the sensor) relative to `/LeKiwi/base`.
 - `focal_length=36.5mm` (unchanged, still from leisaac's `TiledCameraCfg` for an
-  unrelated camera, NOT the real Seeed X10's actual optics), `horizontal_aperture=
-  73.0mm`, `vertical_aperture=54.75mm`, `clipping_range=(0.01, 50.0)`. Aperture values
-  **deliberately changed 2026-08-11** (were `36.83mm` / `15.29mm`) to give **exactly 90°
-  horizontal FOV** (`2*atan(73.0/(2*36.5)) = 90°`) with `vertical_aperture` now actually
-  matching the 640×480 (4:3) render resolution (`54.75 = 73.0 * 480/640` — the old values'
-  ratio, 15.29/36.83 = 0.415, never matched 4:3 at all, silently stretching the image; a
-  real latent bug fixed as part of this same change). 90° was picked to match the lidar
-  variant's FOV (also narrowed to a forward-facing 90° window the same day — see the
-  Lidar section below) and to fix the standing "53.5° is tiny for nav" complaint — not
-  because a real X10 spec was found; none exists (re-verified 2026-08-10 across five
-  independent sources — product page, two resellers, Seeed's own wiki, and the actual
-  datasheet PDF read directly — see `env_cfg_camera.py`'s matching comment for the full
-  source list). This is simulation-only; the real physical X10's actual FOV remains
-  unknown and unpublished.
+  unrelated camera, NOT a real spec for either the old X10 or the new Arducam),
+  `horizontal_aperture=87.0mm`, `vertical_aperture=65.25mm`, `clipping_range=(0.01,
+  50.0)`. Aperture values went through two revisions on **2026-08-11**: first
+  `36.83mm`/`15.29mm` (the inherited placeholder) to `73.0mm`/`54.75mm` for **exactly
+  90° horizontal FOV** (`2*atan(73.0/(2*36.5)) = 90°`) — picked only to match the lidar
+  variant's FOV and to fix the standing "53.5° is tiny for nav" complaint, since no real
+  X10 spec existed to target — then corrected again the same day to **`87.0mm`/
+  `65.25mm` for ~100.0° horizontal FOV** (`2*atan(87.0/(2*36.5)) = 100.001°`) once the
+  real camera changed from the X10 to the Arducam IMX291 board (see below), which
+  *does* publish a FOV: "100° Wide Angle". `vertical_aperture` keeps the same
+  aspect-ratio relationship the 90° fix established (`65.25 = 87.0 * 480/640`, matching
+  the 640×480 (4:3) render resolution — the pre-90° values' ratio, 15.29/36.83 = 0.415,
+  never matched 4:3 at all, silently stretching the image; that latent bug stays fixed
+  through both later revisions). The lidar variant's forward-facing window was widened
+  to the same 100° the same day (see the Lidar section below), so real camera spec =
+  simulated camera FOV = simulated lidar FOV, all three genuinely in agreement now,
+  not just arbitrarily matched to each other the way the 90° pass was. This aperture
+  number is still simulation-only — it doesn't independently confirm the physical
+  Arducam unit, once actually purchased, measures out to exactly 100° (marketing "wide
+  angle" FOV numbers aren't always precise) — but it's tracking a real published spec
+  for the camera actually in the BoM, which the X10-era 90° number never had (X10 FOV
+  re-verified 2026-08-10 across five independent sources — product page, two resellers,
+  Seeed's own wiki, and the actual datasheet PDF read directly — none of them publish
+  one; see `env_cfg_camera.py`'s matching comment for the full source list).
 - Recommended render resolution `640×480 @ 30fps` (matches the reference config;
   resolution/fps are render-product settings, not attributes on the Camera prim itself).
 
@@ -332,10 +342,11 @@ replacement. Real hardware specs used there: 360° FOV, 0.15–12m range, 5.5Hz 
 scan rate (10Hz max), ≤1° angular resolution — all from Slamtec's own datasheet. This
 script's 360° matches the sensor's real physical sweep, deliberately unchanged — it's a
 raw hardware-verification tool ("does this sensor produce real scan data at all"), not
-the RL training config. The **trained policy** only ever sees a forward-facing 90°
+the RL training config. The **trained policy** only ever sees a forward-facing 100°
 slice of that sweep (`isaac_lab/lekiwi_tasks/cone_nav/env_cfg_lidar.py`'s
-`horizontal_fov_range=(-45, 45)`, narrowed 2026-08-11 to match the camera variant's
-FOV) — the RPLIDAR unit itself still physically spins the full circle either way.
+`horizontal_fov_range=(-50, 50)`, narrowed 2026-08-11 to match the real Arducam
+camera's published 100° FOV) — the RPLIDAR unit itself still physically spins the
+full circle either way.
 
 **What's still an approximation, worth knowing before you print:**
 - The block and RPLIDAR housing are placeholder-accuracy geometry (primitives and

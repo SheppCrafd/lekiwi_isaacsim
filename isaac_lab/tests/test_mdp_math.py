@@ -255,19 +255,21 @@ def test_apply_lidar_angular_jitter_deg_per_ray_scales_shift_magnitude():
     Regression test for a real bug fixed 2026-08-11: deg_per_ray used to be silently
     inferred as 360.0/num_rays inside this function, which only happened to be correct
     while the lidar's FOV was a full 360deg sweep (360 rays / 360deg = 1deg/ray). Once
-    the FOV was narrowed to a forward-facing 90deg window (env_cfg_lidar.py, to match
-    the camera variant's FOV) that inference would have silently computed 360/90 =
-    4deg/ray for a sensor whose REAL resolution is still 1deg/ray -- understating
-    jitter shifts by 4x. Proves the now-explicit deg_per_ray parameter actually
-    controls shift magnitude as expected, not just that the function runs.
+    the FOV was narrowed to a forward-facing window (env_cfg_lidar.py, currently
+    100deg to match the real Arducam camera's published FOV -- was 90deg for one
+    session before the real spec was known) that inference would have silently
+    computed 360/num_rays (3.6deg/ray at the current 100-ray config) for a sensor
+    whose REAL resolution is still 1deg/ray -- understating jitter shifts by ~3.6x.
+    Proves the now-explicit deg_per_ray parameter actually controls shift magnitude
+    as expected, not just that the function runs.
     """
     torch.manual_seed(4)
     n = 2000
-    num_rays = 90
+    num_rays = 100
     ranges = torch.arange(num_rays, dtype=torch.float32).unsqueeze(0).repeat(n, 1)
     jitter_std_deg = torch.full((n,), 4.0)
     out_correct = apply_lidar_angular_jitter_variable_std(ranges.clone(), jitter_std_deg, deg_per_ray=1.0)
-    out_old_buggy = apply_lidar_angular_jitter_variable_std(ranges.clone(), jitter_std_deg, deg_per_ray=4.0)
+    out_old_buggy = apply_lidar_angular_jitter_variable_std(ranges.clone(), jitter_std_deg, deg_per_ray=360.0 / num_rays)
 
     def mean_abs_shift(shifted: torch.Tensor) -> float:
         # Recover each row's shift by finding where the original ray-0 value (0.0) landed.

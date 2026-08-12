@@ -31,24 +31,28 @@ class LekiwiLidarSceneCfg(LekiwiSceneCfgBase):
     # borrowed from an unrelated reference -- highest-confidence sensor spec in this
     # whole project, position AND stats both real.
     #
-    # horizontal_fov_range narrowed to a forward-facing 90deg window (-45..45), NOT the
+    # horizontal_fov_range narrowed to a forward-facing 100deg window (-50..50), NOT the
     # sensor's full 360deg physical sweep -- a deliberate 2026-08-11 decision, not a
     # hardware change. The RPLIDAR still spins the full circle; this just discards
-    # everything outside the forward 90deg before the policy ever sees it, matching the
-    # camera variant's ~90deg FOV (env_cfg_camera.py) so the two sensor variants differ
-    # in modality (image vs. range) without ALSO differing in field of view -- FOV was
-    # never something a real head-to-head between the two needed to control for (they're
-    # trained and evaluated as fully independent policies, not compared against each
-    # other), but matching it removes one variable from the comparison and, as a real
-    # side effect, gives the camera variant its FOV bump too (its old ~53.5deg was
-    # already flagged as tiny for nav, see env_cfg_camera.py). Trivially reversible --
-    # flip back to (-180.0, 180.0) for a full-circle lidar if the two variants are ever
-    # meant to be compared on sensing coverage specifically, not just task performance.
-    # At horizontal_res=1.0 this yields ~90 rays, not confirmed against the real
+    # everything outside the forward 100deg before the policy ever sees it. 100deg
+    # (not the initial 90deg pass) matches the real Arducam IMX291 board camera's own
+    # published "100 Degree Wide Angle" spec (the real front camera as of 2026-08-11,
+    # see BoM.md -- it replaced the Seeed X10, whose FOV was never published anywhere).
+    # env_cfg_camera.py's baked USD optics were updated to the same 100deg the same day,
+    # so real camera spec = sim camera FOV = lidar FOV, all three in agreement -- not
+    # just two of them arbitrarily matched to each other, which is what the initial
+    # 90deg pass was (there was no real spec to target at the time). FOV was never
+    # something a real head-to-head between the camera and lidar variants needed to
+    # control for (they're trained and evaluated as fully independent policies, not
+    # compared against each other), but matching it removes one variable from the
+    # comparison. Trivially reversible -- flip back to (-180.0, 180.0) for a full-circle
+    # lidar if the two variants are ever meant to be compared on sensing coverage
+    # specifically, not just task performance.
+    # At horizontal_res=1.0 this yields ~100 rays, not confirmed against the real
     # LidarPatternCfg's exact bin-count semantics (inclusive vs. exclusive endpoint) --
     # same "unverified until Phase 2" caveat as everything else touching a live sensor
     # cfg in this file. deploy/lekiwi_policy_runner.py and scripts/export_policy.py's
-    # hardcoded ray counts were updated to match (90, not 360) -- keep all three in sync
+    # hardcoded ray counts were updated to match (100, not 360) -- keep all three in sync
     # if this range or horizontal_res ever changes again.
     # Uses MultiMeshRayCasterCfg, not the plain RayCasterCfg an earlier version of this
     # file used -- confirmed via source research (isaaclab.sensors changelog/docs), not
@@ -71,7 +75,7 @@ class LekiwiLidarSceneCfg(LekiwiSceneCfgBase):
         pattern_cfg=patterns.LidarPatternCfg(
             channels=1,
             vertical_fov_range=(0.0, 0.0),
-            horizontal_fov_range=(-45.0, 45.0),
+            horizontal_fov_range=(-50.0, 50.0),
             horizontal_res=1.0,
         ),
         max_distance=12.0,  # RPLIDAR A1M8 max range

@@ -51,12 +51,14 @@ fix in the real world.
   Phases 3-6 below, and they're done.
 - **The camera's field of view was too narrow, so we widened it and matched the lidar's
   to it.** The simulated camera's view was only about 53° wide — genuinely tiny for a
-  robot that needs to see what's around it. We widened it to 90° in simulation, narrowed
-  the lidar's field of view to match (it can still physically see all the way around, we
-  just chose to only train the AI on its forward-facing view), and swapped the *real*
-  camera part for one with a real, published, much wider field of view — including
-  designing a new mounting bracket for it, bolted to actual measured holes on the robot
-  rather than guessed (still needs to actually be printed and test-fit — see Phase 0).
+  robot that needs to see what's around it. We swapped the *real* camera part for one
+  with a real, published field of view (100°, "wide angle") — including designing a new
+  mounting bracket for it, bolted to actual measured holes on the robot rather than
+  guessed (still needs to actually be printed and test-fit — see Phase 0) — then widened
+  the simulated camera to that same 100° and narrowed the lidar's field of view to match
+  it too (the lidar can still physically see all the way around; we just chose to only
+  train the AI on its forward-facing view). All three — real camera spec, simulated
+  camera, simulated lidar — now agree on 100°, not just arbitrarily matched to each other.
 - **Nothing has been tested in a real, running simulator yet, and no training has
   happened.** That's the next two steps: renting a cloud graphics card (Phase 1) and
   loading the robot into the simulator for the first real test (Phase 2).
