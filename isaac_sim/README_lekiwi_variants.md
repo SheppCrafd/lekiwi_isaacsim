@@ -342,10 +342,11 @@ replacement. Real hardware specs used there: 360° FOV, 0.15–12m range, 5.5Hz 
 scan rate (10Hz max), ≤1° angular resolution — all from Slamtec's own datasheet. This
 script's 360° matches the sensor's real physical sweep, deliberately unchanged — it's a
 raw hardware-verification tool ("does this sensor produce real scan data at all"), not
-the RL training config. The **trained policy** only ever sees a forward-facing 90°
+the RL training config. The **trained policy** only ever sees a forward-facing 100°
 slice of that sweep (`isaac_lab/lekiwi_tasks/cone_nav/env_cfg_lidar.py`'s
-`horizontal_fov_range=(-45, 45)`, narrowed 2026-08-11 to match the camera variant's
-FOV) — the RPLIDAR unit itself still physically spins the full circle either way.
+`horizontal_fov_range=(-50, 50)`, narrowed 2026-08-11 to match the real Arducam
+camera's published 100° FOV) — the RPLIDAR unit itself still physically spins the
+full circle either way.
 
 **What's still an approximation, worth knowing before you print:**
 - The block and RPLIDAR housing are placeholder-accuracy geometry (primitives and
